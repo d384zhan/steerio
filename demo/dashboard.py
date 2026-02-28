@@ -259,6 +259,12 @@ class Dashboard:
         })
         await self._broadcast_raw(msg.to_json())
 
+    async def broadcast_speak_transcription(self, call_id: str, text: str) -> None:
+        msg = WsMessage(type=WsMsgType.SPEAK_TRANSCRIPTION, payload={
+            "call_id": call_id, "text": text,
+        })
+        await self._broadcast_raw(msg.to_json())
+
     async def broadcast_call_status(self, call_id: str, status: str, phone_number: str = "", error: str = "") -> None:
         payload = {"call_id": call_id, "status": status}
         if phone_number:

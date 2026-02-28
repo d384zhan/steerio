@@ -71,7 +71,14 @@ You are interacting with the caller via voice. Follow these output rules so your
 - Use contractions and natural phrasing. Sound like a real person on the phone.
 - Pause naturally between thoughts by ending sentences cleanly.
 
-If you are unsure about something or need to verify information, use the request_guidance tool to ask the supervising operator for help.
+IMPORTANT — REQUESTING GUIDANCE:
+You have a supervising operator available via the request_guidance tool. You MUST use it frequently:
+- Use it BEFORE giving any specific recommendation, diagnosis, or advice.
+- Use it when the caller asks about pricing, discounts, or promotions.
+- Use it when the caller describes symptoms, financial situations, or product issues.
+- Use it whenever you're about to make a claim you're not 100% certain about.
+- When in doubt, ALWAYS ask for guidance rather than guessing.
+Say "Let me check on that for you" and call request_guidance immediately.
 """
 
 MEDICAL_INSTRUCTIONS = """\
@@ -355,6 +362,47 @@ async def transcribe_and_respond(
     await dashboard.broadcast_voice_transcription(call_id, request_id, text)
 
 
+async def transcribe_and_speak(
+    audio_b64: str,
+    call_id: str,
+    *,
+    http_session: aiohttp.ClientSession,
+    active_calls: dict,
+    dashboard: Dashboard,
+):
+    """Transcribe operator audio via ElevenLabs STT, then speak directly to the caller."""
+    import base64
+
+    audio_bytes = base64.b64decode(audio_b64)
+
+    form = aiohttp.FormData()
+    form.add_field("file", audio_bytes, filename="audio.webm", content_type="audio/webm")
+    form.add_field("model_id", "scribe_v1")
+    form.add_field("language_code", "en")
+
+    try:
+        async with http_session.post(
+            "https://api.elevenlabs.io/v1/speech-to-text",
+            headers={"xi-api-key": os.environ["ELEVEN_API_KEY"]},
+            data=form,
+        ) as resp:
+            result = await resp.json()
+            text = result.get("text", "").strip()
+    except Exception:
+        logger.exception("ElevenLabs STT failed for speak")
+        text = ""
+
+    if not text:
+        await dashboard.broadcast_speak_transcription(call_id, "")
+        return
+
+    entry = active_calls.get(call_id)
+    if entry and entry.get("agent"):
+        entry["agent"].handle_operator_speak(text, call_id)
+
+    await dashboard.broadcast_speak_transcription(call_id, text)
+
+
 async def hang_up(call_id: str, *, active_calls: dict, dashboard: Dashboard):
     """Operator-initiated hangup."""
     await _end_call(call_id, active_calls, dashboard)
@@ -412,6 +460,16 @@ async def main():
                 transcribe_and_respond(
                     payload.get("audio", ""),
                     payload.get("request_id", ""),
+                    payload.get("call_id", ""),
+                    http_session=http_session,
+                    active_calls=active_calls,
+                    dashboard=dashboard,
+                )
+            )
+        elif cmd == "speak_voice":
+            asyncio.ensure_future(
+                transcribe_and_speak(
+                    payload.get("audio", ""),
                     payload.get("call_id", ""),
                     http_session=http_session,
                     active_calls=active_calls,

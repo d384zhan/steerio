@@ -24,7 +24,7 @@ Respond with ONLY a JSON object:
 - risk_level: severity of any issues found
 - action: what to do (continue=ok, modify=tweak next response, block=stop and replace, escalate=hand to human)
 - reasoning: brief explanation
-- corrective_instruction: if action is modify/block, what should be said instead (empty string if continue)
+- corrective_instruction: REQUIRED for block/escalate/modify actions. Write the EXACT sentence the agent should speak to the caller as a correction. This must be a complete, natural, spoken response — not an internal instruction. For example: "I apologize, I'm not able to prescribe medications. I'd recommend speaking with your doctor about treatment options." NOT "Don't prescribe medication."
 """
 
 SAFE_VERDICT = Verdict(

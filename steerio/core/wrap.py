@@ -64,6 +64,11 @@ class SteeredAgent(Agent):
         self._judge_llm = judge_llm
         self._eval_threshold_chars = eval_threshold_chars
 
+        # Accumulated corrections from judge — injected into every future turn
+        self._corrections: list[str] = []
+        self._consecutive_blocks = 0
+        self._max_consecutive_blocks = 3
+
         self._evaluator = self._build_evaluator(
             judge_llm, judge_prompt, judge_prompts, policy, eval_threshold_chars,
         )
@@ -171,6 +176,16 @@ class SteeredAgent(Agent):
         if self._pending_instruction:
             turn_ctx.add_message(role="system", content=self._pending_instruction)
             self._pending_instruction = None
+
+        # Inject accumulated corrections so the agent remembers past violations
+        if self._corrections:
+            correction_block = (
+                "CRITICAL SAFETY CORRECTIONS — You MUST follow these on every response. "
+                "You have been flagged for the following violations during this call:\n"
+                + "\n".join(f"- {c}" for c in self._corrections)
+                + "\nDo NOT repeat these mistakes. Follow your safety guidelines strictly."
+            )
+            turn_ctx.add_message(role="system", content=correction_block)
 
     async def llm_node(
         self,
@@ -302,16 +317,71 @@ class SteeredAgent(Agent):
 
     async def _apply_verdict(self, verdict, accumulated_text: str, turn_id: str) -> None:
         if verdict.action == Action.CONTINUE:
+            self._consecutive_blocks = 0
             return
+
         if verdict.action == Action.MODIFY:
             self._pending_instruction = verdict.corrective_instruction
-        elif verdict.action in (Action.BLOCK, Action.ESCALATE):
-            await self.session.interrupt()
-            corrective = verdict.corrective_instruction or (
-                "Your previous response was flagged as unsafe. "
-                "Rephrase your answer following your safety guidelines."
+            # Also persist the correction so it sticks for future turns
+            if verdict.corrective_instruction:
+                self._corrections.append(verdict.reasoning or verdict.corrective_instruction)
+            return
+
+        # BLOCK / ESCALATE
+        self._consecutive_blocks += 1
+        corrective = verdict.corrective_instruction or (
+            "I need to correct what I just said. "
+            "Let me make sure I give you accurate and safe information."
+        )
+
+        # Persist the violation so the agent is reminded on every future turn
+        if verdict.reasoning:
+            self._corrections.append(verdict.reasoning)
+
+        await self.session.interrupt()
+
+        if self._consecutive_blocks >= self._max_consecutive_blocks:
+            asyncio.create_task(self._escalate_and_end(corrective))
+        else:
+            self.session.say(corrective)
+
+    async def _escalate_and_end(self, last_corrective: str) -> None:
+        escalation_msg = (
+            "I'm going to transfer you to a human representative who can better assist you. "
+            "Thank you for your patience, and I apologize for any confusion. Goodbye."
+        )
+        self.session.say(escalation_msg)
+
+        # Broadcast escalation as a system transcript event
+        event = TranscriptEvent(
+            speaker=Speaker.SYSTEM,
+            text=f"[ESCALATION] Call terminated after {self._consecutive_blocks} consecutive safety violations. Last: {last_corrective}",
+            is_final=True,
+            turn_id=str(uuid.uuid4()),
+            call_id=self._call_id,
+        )
+        await self._broadcast_transcript(event)
+        if self._recorder:
+            self._recorder.record_transcript(event)
+        if self._audit:
+            self._audit.log_intervention(
+                self._call_id,
+                intervention_type="escalation_disconnect",
+                instruction=f"Auto-terminated after {self._consecutive_blocks} consecutive blocks",
             )
-            self.session.generate_reply(instructions=corrective)
+
+        logger.warning(
+            "Call %s escalated and terminated — %d consecutive blocks",
+            self._call_id, self._consecutive_blocks,
+        )
+
+        # Disconnect after a short delay so TTS finishes the goodbye
+        await asyncio.sleep(6)
+        await self._broadcast_call_ended(self._call_id)
+        if hasattr(self, 'session') and self.session:
+            room = getattr(self.session, 'room', None)
+            if room:
+                await room.disconnect()
 
     # ── Broadcast helpers (guard for optional monitor/dashboard) ──
 
@@ -367,6 +437,9 @@ class SteeredAgent(Agent):
     def handle_inject_instruction(self, instruction: str, call_id: str) -> None:
         if call_id and call_id != self._call_id:
             return
+        if self._mode != "human":
+            logger.info("Inject ignored — only available in human mode (current: %s)", self._mode)
+            return
         if self._audit:
             self._audit.log_intervention(self._call_id, intervention_type="inject", instruction=instruction)
         asyncio.create_task(self._do_inject(instruction))
@@ -414,6 +487,9 @@ class SteeredAgent(Agent):
 
     def handle_operator_speak(self, text: str, call_id: str) -> None:
         if call_id and call_id != self._call_id:
+            return
+        if self._mode != "human":
+            logger.info("Operator speak ignored — only available in human mode (current: %s)", self._mode)
             return
         if self._audit:
             self._audit.log_intervention(self._call_id, intervention_type="operator_speak", instruction=text)

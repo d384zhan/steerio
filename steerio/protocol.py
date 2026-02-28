@@ -81,9 +81,12 @@ class WsMsgType(str, Enum):
     DIAL_CALL = "dial_call"
     HANG_UP = "hang_up"
     CALL_STATUS = "call_status"
-    # Voice input (operator mic → STT → guidance response)
+    # Voice input (operator mic → STT)
     VOICE_INPUT = "voice_input"
     VOICE_TRANSCRIPTION = "voice_transcription"
+    # Operator speak via mic (operator mic → STT → say to caller)
+    SPEAK_VOICE = "speak_voice"
+    SPEAK_TRANSCRIPTION = "speak_transcription"
 
 
 @dataclass

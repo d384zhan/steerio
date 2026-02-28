@@ -1000,12 +1000,34 @@ html, body {
 
 .inputbar-btn:hover { background: var(--bg); border-color: var(--border-strong); }
 .btn-inject:hover { background: var(--blue-light); color: var(--blue); border-color: var(--blue); }
-.btn-speak:hover { background: var(--green-light); color: var(--green); border-color: var(--green); }
 
 .btn-inject:active, .btn-inject.sent { background: var(--blue); color: #fff; border-color: var(--blue); }
-.btn-speak:active, .btn-speak.sent { background: var(--green); color: #fff; border-color: var(--green); }
 
 .inputbar-btn.sent { transition: all 0.05s; }
+.inputbar-btn:disabled { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
+.inputbar.disabled-mode input { opacity: 0.35; cursor: not-allowed; }
+.inputbar.disabled-mode .shortcut-hint { display: none; }
+.inputbar .mode-hint { display: none; padding: 0 12px; font-size: 10px; color: var(--text-tertiary); }
+.inputbar.disabled-mode .mode-hint { display: block; }
+
+.speak-mic {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  border: 2px solid var(--green);
+  background: transparent;
+  color: var(--green);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+.speak-mic:hover { background: var(--green-light); }
+.speak-mic.recording { background: var(--red); border-color: var(--red); color: #fff; animation: mic-pulse 1s infinite; }
+.speak-mic.transcribing { background: var(--amber-light); border-color: var(--amber); color: var(--amber); pointer-events: none; }
+.speak-mic:disabled { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
+.speak-mic svg { width: 18px; height: 18px; fill: currentColor; }
+.speak-status { font-size: 10px; color: var(--text-muted); white-space: nowrap; }
+@keyframes mic-pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(239,68,68,.4); } 50% { box-shadow: 0 0 0 6px rgba(239,68,68,0); } }
 
 .inputbar.flash { animation: input-flash 0.35s ease; }
 @keyframes input-flash {
@@ -1157,9 +1179,11 @@ html, body {
         <input type="text" id="cmdInput" placeholder="Operator instruction..." autocomplete="off" />
         <div class="inputbar-buttons">
           <button class="inputbar-btn btn-inject" id="btnInject">Inject</button>
-          <button class="inputbar-btn btn-speak" id="btnSpeak">Speak</button>
+          <button class="speak-mic" id="btnSpeakMic" disabled></button>
         </div>
-        <span class="shortcut-hint">enter inject &middot; shift+enter speak</span>
+        <span class="speak-status" id="speakStatus"></span>
+        <span class="shortcut-hint">enter = instruct agent</span>
+        <span class="mode-hint">Switch to Human mode to inject or speak</span>
       </div>
     </section>
 
@@ -1189,7 +1213,8 @@ html, body {
   var callCount = document.getElementById("callCount");
   var cmdInput = document.getElementById("cmdInput");
   var btnInject = document.getElementById("btnInject");
-  var btnSpeak = document.getElementById("btnSpeak");
+  var btnSpeakMic = document.getElementById("btnSpeakMic");
+  var speakStatus = document.getElementById("speakStatus");
   var filterAll = document.getElementById("filterAll");
   var filterFlagged = document.getElementById("filterFlagged");
   var phoneInput = document.getElementById("phoneInput");
@@ -1267,6 +1292,7 @@ html, body {
       case "context_update": onContextUpdate(p); break;
       case "call_status": onCallStatus(p); break;
       case "voice_transcription": onVoiceTranscription(p); break;
+      case "speak_transcription": onSpeakTranscription(p); break;
       case "ack": onAck(p); break;
     }
   }
@@ -1637,6 +1663,7 @@ html, body {
   var ACK_LABELS = {
     inject_instruction: "Instruction injected",
     operator_speak: "Speaking to caller",
+    speak_voice: "Speaking to caller",
     set_mode: "Mode updated",
     guidance_response: "Guidance sent",
     dial_call: "Dialing...",
@@ -1644,7 +1671,8 @@ html, body {
   };
   var ACK_TYPES = {
     inject_instruction: "inject",
-    operator_speak: "speak"
+    operator_speak: "speak",
+    speak_voice: "speak"
   };
   function onAck(p) {
     var cmd = p.command || "";
@@ -1687,6 +1715,26 @@ html, body {
       var m = btn.getAttribute("data-mode");
       btn.className = "mode-btn" + (m === mode ? " active-" + m : "");
     });
+    renderInputbar(mode);
+  }
+
+  function renderInputbar(mode) {
+    var bar = cmdInput.closest(".inputbar");
+    var isHuman = mode === "human";
+    btnInject.disabled = !isHuman;
+    btnSpeakMic.disabled = !isHuman;
+    cmdInput.disabled = !isHuman;
+    if (isHuman) {
+      bar.classList.remove("disabled-mode");
+      cmdInput.placeholder = "Operator instruction...";
+      btnSpeakMic.innerHTML = MIC_SVG;
+      speakStatus.textContent = "";
+    } else {
+      bar.classList.add("disabled-mode");
+      cmdInput.placeholder = "LLM mode — judge handles corrections automatically";
+      btnSpeakMic.innerHTML = MIC_SVG;
+      speakStatus.textContent = "";
+    }
   }
 
   modeToggle.addEventListener("click", function(e) {
@@ -1829,19 +1877,83 @@ html, body {
     if (bar) { bar.classList.remove("flash"); void bar.offsetWidth; bar.classList.add("flash"); }
   }
 
+  function isHumanMode() {
+    var c = selectedCallId ? calls.get(selectedCallId) : null;
+    return c && c.mode === "human";
+  }
+
   btnInject.addEventListener("click", function(){
-    var t = getInput(); if (t) { flashBtn(btnInject); send({ type: "inject_instruction", payload: { instruction: t } }); }
+    if (!isHumanMode()) return;
+    var t = getInput(); if (t) { flashBtn(btnInject); send({ type: "inject_instruction", payload: { instruction: t, call_id: selectedCallId } }); }
   });
-  btnSpeak.addEventListener("click", function(){
-    var t = getInput(); if (t) { flashBtn(btnSpeak); send({ type: "operator_speak", payload: { text: t } }); }
+  // ── Speak mic (record → STT → say to caller) ──
+  var speakRecorder = null;
+
+  btnSpeakMic.addEventListener("click", function() {
+    if (!isHumanMode() || !selectedCallId) return;
+    if (btnSpeakMic.classList.contains("transcribing")) return;
+
+    if (speakRecorder) {
+      speakRecorder.stop();
+      speakRecorder = null;
+      return;
+    }
+
+    navigator.mediaDevices.getUserMedia({ audio: true }).then(function(stream) {
+      var recorder = new MediaRecorder(stream, { mimeType: "audio/webm" });
+      var chunks = [];
+      speakRecorder = recorder;
+
+      btnSpeakMic.classList.add("recording");
+      btnSpeakMic.innerHTML = STOP_SVG;
+      speakStatus.textContent = "Recording... click to send";
+
+      recorder.ondataavailable = function(e) { chunks.push(e.data); };
+
+      recorder.onstop = function() {
+        stream.getTracks().forEach(function(t) { t.stop(); });
+        speakRecorder = null;
+        btnSpeakMic.classList.remove("recording");
+        btnSpeakMic.classList.add("transcribing");
+        btnSpeakMic.innerHTML = MIC_SVG;
+        speakStatus.textContent = "Transcribing...";
+
+        var blob = new Blob(chunks, { type: "audio/webm" });
+        var reader = new FileReader();
+        reader.onloadend = function() {
+          var b64 = reader.result.split(",")[1];
+          send({
+            type: "speak_voice",
+            payload: { audio: b64, call_id: selectedCallId }
+          });
+        };
+        reader.readAsDataURL(blob);
+      };
+
+      recorder.start();
+    }).catch(function() {
+      showToast("Microphone access denied", false);
+    });
   });
+
+  // Handle speak transcription result
+  function onSpeakTranscription(p) {
+    btnSpeakMic.classList.remove("transcribing");
+    btnSpeakMic.innerHTML = MIC_SVG;
+    if (p.text) {
+      speakStatus.textContent = "Sent: " + p.text;
+      setTimeout(function() { speakStatus.textContent = ""; }, 3000);
+    } else {
+      speakStatus.textContent = "No speech detected";
+      setTimeout(function() { speakStatus.textContent = ""; }, 3000);
+    }
+  }
+
   cmdInput.addEventListener("keydown", function(e){
-    if (e.key === "Enter" && e.shiftKey) {
+    if (!isHumanMode()) return;
+    if (e.key === "Enter" && !e.shiftKey && !e.ctrlKey) {
       e.preventDefault();
-      var t = getInput(); if (t) { flashBtn(btnSpeak); send({ type: "operator_speak", payload: { text: t } }); }
-    } else if (e.key === "Enter" && !e.shiftKey && !e.ctrlKey) {
-      e.preventDefault();
-      var t = getInput(); if (t) { flashBtn(btnInject); send({ type: "inject_instruction", payload: { instruction: t } }); }
+      var t = getInput(); if (t) { flashBtn(btnInject); send({ type: "inject_instruction", payload: { instruction: t, call_id: selectedCallId } }); }
     }
   });
 
@@ -1883,6 +1995,7 @@ html, body {
   function trunc(s, n) { return s && s.length > n ? s.slice(0, n) + "\u2026" : (s || ""); }
 
   // ── Init ──
+  btnSpeakMic.innerHTML = MIC_SVG;
   connect();
 })();
 </script>
