@@ -1441,7 +1441,64 @@ html, body {
     }
     if (c.verdicts.length > 50) c.verdicts.pop();
     if (cid === selectedCallId && drawerOpen) renderVerdictHistory(c);
+
+    // Retroactively attach verdict to the last agent message already in the DOM
+    // and clear pendingVerdict so it doesn't also attach to the next agent message
+    if (cid === selectedCallId && p.risk_level !== "none") {
+      attachVerdictToLastAgent(p);
+      c.pendingVerdict = null;
+    }
+
     renderSidebar();
+  }
+
+  function attachVerdictToLastAgent(v) {
+    var msgs = transcript.querySelectorAll(".msg.agent");
+    if (!msgs.length) return;
+    var el = msgs[msgs.length - 1];
+
+    // Skip if already has a verdict badge
+    if (el.querySelector(".verdict-badge")) return;
+
+    var riskLevel = v.risk_level || "none";
+    var blocked = v.action === "block" || v.action === "escalate";
+
+    // Add risk/blocked classes
+    if (riskLevel !== "none") el.classList.add("risk-" + riskLevel);
+    if (blocked) el.classList.add("blocked");
+
+    // Add corrective text for blocks
+    if (blocked && v.corrective_instruction) {
+      var corr = document.createElement("span");
+      corr.className = "corrective";
+      corr.textContent = v.corrective_instruction;
+      el.appendChild(corr);
+    }
+
+    // Add verdict badge
+    var vid = "v-" + Date.now() + "-" + Math.random().toString(36).slice(2, 6);
+    var badgeHtml = '<div class="verdict-badge risk-' + riskLevel + '" data-vid="' + vid + '">'
+      + esc(riskLevel) + ' &middot; ' + esc(v.action)
+      + '</div>'
+      + '<div class="verdict-detail" id="' + vid + '">';
+    if (v.reasoning) badgeHtml += '<div class="verdict-reasoning">' + esc(v.reasoning) + '</div>';
+    if (v.corrective_instruction && !blocked) badgeHtml += '<div style="margin-top:4px">' + esc(v.corrective_instruction) + '</div>';
+    badgeHtml += '</div>';
+
+    var wrapper = document.createElement("div");
+    wrapper.innerHTML = badgeHtml;
+    while (wrapper.firstChild) el.appendChild(wrapper.firstChild);
+
+    // Wire badge click
+    var badge = el.querySelector(".verdict-badge");
+    if (badge) {
+      badge.addEventListener("click", function() {
+        var detail = document.getElementById(badge.getAttribute("data-vid"));
+        if (detail) detail.classList.toggle("open");
+      });
+    }
+
+    if (autoScroll) scrollBottom();
   }
 
   function renderVerdictHistory(call) {
