@@ -6,59 +6,68 @@
 <title>Steerio Dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --bg: #fafafa;
+  --bg: #f5f5f4;
   --surface: #ffffff;
-  --text: #1a1a1a;
-  --text-secondary: #666666;
-  --text-muted: #999999;
-  --border: #e5e7eb;
-  --border-strong: #d1d5db;
-  --blue: #3b82f6;
+  --text: #1c1917;
+  --text-secondary: #57534e;
+  --text-muted: #a8a29e;
+  --border: #e7e5e4;
+  --border-strong: #d6d3d1;
+  --blue: #2563eb;
   --blue-light: #eff6ff;
-  --amber: #f59e0b;
+  --blue-mid: #dbeafe;
+  --amber: #d97706;
   --amber-light: #fffbeb;
   --amber-bg: #fef3c7;
-  --red: #ef4444;
+  --red: #dc2626;
   --red-light: #fef2f2;
-  --orange: #f97316;
+  --orange: #ea580c;
   --orange-light: #fff7ed;
-  --green: #22c55e;
+  --green: #16a34a;
   --green-light: #f0fdf4;
+  --green-mid: #dcfce7;
   --slate: #64748b;
-  --radius: 8px;
+  --purple: #7c3aed;
+  --purple-light: #f5f3ff;
+  --radius: 10px;
   --radius-sm: 6px;
-  --radius-lg: 12px;
-  --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
-  --shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --shadow-xs: 0 1px 2px rgba(28,25,23,0.04);
+  --shadow-sm: 0 1px 3px rgba(28,25,23,0.06), 0 1px 2px rgba(28,25,23,0.04);
+  --shadow: 0 4px 6px -1px rgba(28,25,23,0.07), 0 2px 4px -2px rgba(28,25,23,0.05);
+  --shadow-md: 0 8px 16px -4px rgba(28,25,23,0.08), 0 4px 6px -2px rgba(28,25,23,0.04);
+  --mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
 }
 
 html, body {
   height: 100%;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
   background: var(--bg);
   color: var(--text);
   overflow: hidden;
   font-size: 14px;
-  line-height: 1.5;
+  line-height: 1.55;
   -webkit-font-smoothing: antialiased;
+  letter-spacing: -0.01em;
 }
 
 /* Layout */
 .app {
   display: grid;
-  grid-template-rows: 56px 1fr;
+  grid-template-rows: 52px 1fr;
   height: 100vh;
   width: 100vw;
 }
 
 .main {
   display: grid;
-  grid-template-columns: 2fr 1px 3fr;
+  grid-template-columns: 280px 1px 1fr;
   overflow: hidden;
 }
 
@@ -80,7 +89,7 @@ html, body {
 
 .logo {
   font-weight: 700;
-  font-size: 18px;
+  font-size: 17px;
   color: var(--text);
   letter-spacing: -0.5px;
 }
@@ -92,8 +101,8 @@ html, body {
 .conn-pill {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
+  gap: 5px;
+  padding: 3px 10px;
   border-radius: 100px;
   font-size: 11px;
   font-weight: 500;
@@ -103,8 +112,8 @@ html, body {
 }
 
 .conn-dot {
-  width: 7px;
-  height: 7px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   background: var(--text-muted);
 }
@@ -119,7 +128,7 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: 10px;
 }
 
 .call-info {
@@ -129,7 +138,7 @@ html, body {
 }
 
 .call-info:empty::after {
-  content: "No call selected";
+  content: "No active call";
   color: var(--text-muted);
   font-weight: 400;
 }
@@ -201,7 +210,7 @@ html, body {
 }
 
 .mode-btn {
-  padding: 6px 14px;
+  padding: 5px 14px;
   border: none;
   background: transparent;
   font-family: inherit;
@@ -221,7 +230,15 @@ html, body {
 
 @keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
 @keyframes blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
-@keyframes pulse-amber { 0%, 100% { box-shadow: 0 0 0 0 rgba(245,158,11,0.4); } 50% { box-shadow: 0 0 0 4px rgba(245,158,11,0); } }
+@keyframes pulse-amber { 0%, 100% { box-shadow: 0 0 0 0 rgba(217,119,6,0.4); } 50% { box-shadow: 0 0 0 4px rgba(217,119,6,0); } }
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(-8px); }
+  to { opacity: 1; transform: translateX(0); }
+}
 
 /* Left Panel: Calls */
 .panel-calls {
@@ -236,18 +253,20 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 16px 12px;
+  padding: 14px 16px 10px;
   flex-shrink: 0;
 }
 
 .panel-title {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
-  color: var(--text);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .call-count {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text-muted);
   font-weight: 500;
   margin-left: 6px;
@@ -262,20 +281,22 @@ html, body {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 12px;
+  padding: 6px 14px;
   background: var(--blue);
   color: white;
   border: none;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius);
   font-family: inherit;
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.15s;
+  transition: all 0.15s;
+  box-shadow: var(--shadow-xs);
 }
 
-.btn-launch:hover { background: #2563eb; }
-.btn-launch:disabled { opacity: 0.5; cursor: default; }
+.btn-launch:hover { background: #1d4ed8; box-shadow: var(--shadow-sm); }
+.btn-launch:active { transform: scale(0.97); }
+.btn-launch:disabled { opacity: 0.5; cursor: default; transform: none; }
 
 .btn-launch svg {
   width: 14px;
@@ -288,14 +309,15 @@ html, body {
   position: absolute;
   top: 100%;
   right: 0;
-  margin-top: 4px;
+  margin-top: 6px;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  min-width: 220px;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  min-width: 260px;
   z-index: 100;
   overflow: hidden;
+  padding: 4px;
 }
 
 .launch-menu.open { display: block; }
@@ -309,11 +331,11 @@ html, body {
   text-align: left;
   font-family: inherit;
   cursor: pointer;
-  transition: background 0.1s;
+  transition: all 0.1s;
+  border-radius: var(--radius);
 }
 
 .launch-option:hover { background: var(--bg); }
-.launch-option + .launch-option { border-top: 1px solid var(--border); }
 
 .launch-option-title {
   font-size: 13px;
@@ -325,6 +347,7 @@ html, body {
   font-size: 11px;
   color: var(--text-muted);
   margin-top: 2px;
+  line-height: 1.4;
 }
 
 /* Call list */
@@ -334,7 +357,7 @@ html, body {
   padding: 0 8px 8px;
 }
 
-.calls-list::-webkit-scrollbar { width: 4px; }
+.calls-list::-webkit-scrollbar { width: 3px; }
 .calls-list::-webkit-scrollbar-track { background: transparent; }
 .calls-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
@@ -353,7 +376,7 @@ html, body {
   border-radius: var(--radius);
   cursor: pointer;
   margin-bottom: 2px;
-  transition: background 0.1s;
+  transition: all 0.1s;
 }
 
 .call-card:hover { background: var(--bg); }
@@ -402,10 +425,11 @@ html, body {
   padding: 1px 6px;
   border-radius: 100px;
   text-transform: uppercase;
+  letter-spacing: 0.03em;
 }
 
 .call-mode-badge.llm { background: var(--blue-light); color: var(--blue); }
-.call-mode-badge.human { background: var(--amber-light); color: #b45309; }
+.call-mode-badge.human { background: var(--amber-light); color: var(--amber); }
 .call-mode-badge.takeover { background: var(--red-light); color: var(--red); }
 
 .call-snippet {
@@ -476,7 +500,7 @@ html, body {
 .toolbar-spacer { flex: 1; }
 
 .btn-verdict-history {
-  padding: 6px 12px;
+  padding: 5px 12px;
   margin-right: 12px;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
@@ -492,19 +516,22 @@ html, body {
 .btn-verdict-history:hover { background: var(--bg); border-color: var(--border-strong); }
 .btn-verdict-history.active { background: var(--blue-light); color: var(--blue); border-color: var(--blue); }
 
-/* Transcript */
+/* ═══════════════════════════════════════════════
+   TRANSCRIPT — centered chat area
+   ═══════════════════════════════════════════════ */
 .transcript {
   flex: 1;
   overflow-y: auto;
-  padding: 16px 20px;
+  padding: 24px 24px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 3px;
+  align-items: center;
 }
 
-.transcript::-webkit-scrollbar { width: 5px; }
+.transcript::-webkit-scrollbar { width: 4px; }
 .transcript::-webkit-scrollbar-track { background: transparent; }
-.transcript::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+.transcript::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
 
 .transcript-empty {
   flex: 1;
@@ -515,102 +542,169 @@ html, body {
   font-size: 14px;
 }
 
-/* Messages */
-.msg {
-  max-width: 80%;
-  padding: 8px 14px;
-  border-radius: var(--radius-lg);
-  font-size: 14px;
-  line-height: 1.55;
-  word-break: break-word;
-  animation: fadeIn 0.15s ease;
-  border-left: 3px solid transparent;
+/* Centered container for all transcript items */
+.transcript > * {
+  width: 100%;
+  max-width: 680px;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(4px); }
-  to { opacity: 1; transform: translateY(0); }
+/* ═══════════════════════════════════════════════
+   CHAT BUBBLES — polished conversation messages
+   ═══════════════════════════════════════════════ */
+.msg {
+  padding: 10px 16px;
+  border-radius: var(--radius-xl);
+  font-size: 14px;
+  line-height: 1.6;
+  word-break: break-word;
+  animation: fadeUp 0.2s ease;
+  position: relative;
 }
 
 .msg.user {
   align-self: flex-start;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-left: 3px solid var(--border-strong);
+  border-radius: var(--radius-xl) var(--radius-xl) var(--radius-xl) 6px;
+  box-shadow: var(--shadow-xs);
+  max-width: 85%;
 }
 
 .msg.agent {
   align-self: flex-end;
-  background: var(--blue-light);
-  border: 1px solid #dbeafe;
-  border-left: none;
-  border-right: 3px solid var(--blue);
+  background: var(--blue);
+  color: white;
+  border-radius: var(--radius-xl) var(--radius-xl) 6px var(--radius-xl);
+  box-shadow: var(--shadow-sm);
+  max-width: 85%;
 }
 
+.msg.agent .msg-speaker { color: rgba(255,255,255,0.7); }
+.msg.agent .msg-time { color: rgba(255,255,255,0.5); }
+
+/* Risk-based agent bubble overrides */
+.msg.agent.risk-low { background: var(--blue); }
+.msg.agent.risk-medium { background: #b45309; }
+.msg.agent.risk-high { background: #c2410c; }
+.msg.agent.risk-critical { background: var(--red); }
+.msg.agent.blocked { background: var(--red); opacity: 0.6; }
+.msg.agent.blocked .msg-text { text-decoration: line-through; }
+
+/* ═══════════════════════════════════════════════
+   SYSTEM EVENTS — banners, not bubbles
+   Inject, Override, Operator Speak, Tool Calls
+   ═══════════════════════════════════════════════ */
 .msg.system {
   align-self: center;
-  background: var(--bg);
-  border: 1px dashed var(--border-strong);
-  color: var(--text-secondary);
-  max-width: 85%;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 12px;
   text-align: center;
-  border-left: none;
+  padding: 4px 12px;
+  max-width: 100%;
+  border-radius: 0;
 }
 
-.msg.operator {
-  align-self: center;
-  background: var(--green-light);
-  border: 1px solid #bbf7d0;
-  max-width: 85%;
-  border-left: 3px solid var(--green);
+.sys-event {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 14px;
+  border-radius: var(--radius);
+  font-family: var(--mono);
+  font-size: 12.5px;
+  line-height: 1.5;
+  animation: slideIn 0.2s ease;
+  max-width: 100%;
+  border: 1px solid;
 }
 
-.msg.inject {
-  align-self: center;
-  background: var(--blue-light);
-  border: 1px solid #dbeafe;
-  max-width: 85%;
-  border-left: 3px solid var(--blue);
+.sys-event .sys-icon {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: white;
+  margin-top: 1px;
 }
-.msg.inject .msg-speaker { color: var(--blue); }
 
-.msg.override {
-  align-self: center;
-  background: var(--red-light);
-  border: 1px solid #fecaca;
-  max-width: 85%;
-  border-left: 3px solid var(--red);
+.sys-event .sys-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 2px;
 }
-.msg.override .msg-speaker { color: var(--red); }
 
-/* Risk-based message styling */
-.msg.risk-low { border-left-color: var(--slate); }
-.msg.risk-medium { border-left-color: var(--amber); background: var(--amber-light); }
-.msg.risk-high { border-left-color: var(--orange); background: var(--orange-light); }
-.msg.risk-critical { border-left-color: var(--red); background: var(--red-light); }
-.msg.blocked { border-left-color: var(--red); background: var(--red-light); border-left-width: 4px; }
-.msg.blocked .msg-text { text-decoration: line-through; opacity: 0.5; }
+.sys-event .sys-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.sys-event .sys-text {
+  word-break: break-word;
+}
+
+/* Inject */
+.sys-event.inject {
+  background: #f0f7ff;
+  border-color: var(--blue-mid);
+}
+.sys-event.inject .sys-icon { background: var(--blue); }
+.sys-event.inject .sys-label { color: var(--blue); }
+.sys-event.inject .sys-text { color: #1e40af; }
+
+/* Override */
+.sys-event.override {
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+.sys-event.override .sys-icon { background: var(--red); }
+.sys-event.override .sys-label { color: var(--red); }
+.sys-event.override .sys-text { color: #991b1b; }
+
+/* Operator speak */
+.sys-event.operator {
+  background: #f0fdf4;
+  border-color: var(--green-mid);
+}
+.sys-event.operator .sys-icon { background: var(--green); }
+.sys-event.operator .sys-label { color: var(--green); }
+.sys-event.operator .sys-text { color: #166534; }
+
+/* Tool call */
+.sys-event.toolcall {
+  background: var(--purple-light);
+  border-color: #e9d5ff;
+}
+.sys-event.toolcall .sys-icon { background: var(--purple); }
+.sys-event.toolcall .sys-label { color: var(--purple); }
+.sys-event.toolcall .sys-text { color: #5b21b6; }
+
+/* ═══════════════════════════════════════════════ */
 
 .msg-meta {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 3px;
+  margin-bottom: 2px;
 }
 
 .msg-speaker {
   font-size: 11px;
   font-weight: 600;
   color: var(--text-secondary);
-  text-transform: capitalize;
 }
 
 .msg-time {
-  font-size: 11px;
+  font-size: 10px;
   color: var(--text-muted);
 }
-
-.msg.operator .msg-speaker { color: #16a34a; }
 
 /* Inline verdict badge */
 .verdict-badge {
@@ -626,22 +720,22 @@ html, body {
   transition: all 0.15s;
 }
 
-.verdict-badge.risk-low { background: #f1f5f9; color: var(--slate); }
-.verdict-badge.risk-medium { background: var(--amber-bg); color: #92400e; }
-.verdict-badge.risk-high { background: #fed7aa; color: #9a3412; }
-.verdict-badge.risk-critical { background: #fecaca; color: #991b1b; }
+.verdict-badge.risk-low { background: rgba(255,255,255,0.2); color: rgba(255,255,255,0.8); }
+.verdict-badge.risk-medium { background: rgba(255,255,255,0.2); color: rgba(255,255,255,0.9); }
+.verdict-badge.risk-high { background: rgba(255,255,255,0.25); color: white; }
+.verdict-badge.risk-critical { background: rgba(255,255,255,0.25); color: white; }
 
-.verdict-badge:hover { filter: brightness(0.95); }
+.verdict-badge:hover { background: rgba(255,255,255,0.35); }
 
 .verdict-detail {
   display: none;
   margin-top: 8px;
   padding: 8px 12px;
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.15);
   border-radius: var(--radius-sm);
   font-size: 12px;
-  color: var(--text-secondary);
+  font-family: var(--mono);
+  color: rgba(255,255,255,0.9);
   line-height: 1.5;
 }
 
@@ -653,23 +747,21 @@ html, body {
   display: block;
   margin-top: 8px;
   padding: 8px 12px;
-  background: var(--green-light);
-  border: 1px solid #bbf7d0;
+  background: rgba(255,255,255,0.15);
   border-radius: var(--radius-sm);
-  color: #166534;
+  color: rgba(255,255,255,0.9);
   font-size: 13px;
 }
 
 /* Guidance card */
 .guidance-card {
-  align-self: center;
-  max-width: 90%;
+  max-width: 100%;
   width: 100%;
   padding: 14px 16px;
   border: 2px solid var(--amber);
   background: var(--amber-light);
   border-radius: var(--radius-lg);
-  animation: fadeIn 0.15s ease;
+  animation: fadeUp 0.2s ease;
 }
 
 .guidance-card.resolved {
@@ -698,7 +790,7 @@ html, body {
 .guidance-label {
   font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
   color: #92400e;
 }
@@ -723,29 +815,32 @@ html, body {
   padding: 0 12px;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius);
   color: var(--text);
   font-family: inherit;
   font-size: 13px;
   outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
 
-.guidance-input:focus { border-color: var(--amber); box-shadow: 0 0 0 2px rgba(245,158,11,0.2); }
+.guidance-input:focus { border-color: var(--amber); box-shadow: 0 0 0 3px rgba(217,119,6,0.12); }
 
 .guidance-send {
   height: 36px;
   padding: 0 16px;
   background: var(--amber);
   border: none;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius);
   color: white;
   font-family: inherit;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
+  transition: all 0.15s;
 }
 
-.guidance-send:hover { background: #d97706; }
+.guidance-send:hover { background: #b45309; }
+.guidance-send:active { transform: scale(0.97); }
 
 .guidance-sent {
   font-size: 13px;
@@ -805,7 +900,7 @@ html, body {
   padding: 8px 20px 16px;
 }
 
-.verdict-list::-webkit-scrollbar { width: 4px; }
+.verdict-list::-webkit-scrollbar { width: 3px; }
 .verdict-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
 .vh-item {
@@ -850,7 +945,9 @@ html, body {
   flex-shrink: 0;
 }
 
-/* Input Bar */
+/* ═══════════════════════════════════════════════
+   INPUT BAR
+   ═══════════════════════════════════════════════ */
 .inputbar {
   display: flex;
   align-items: center;
@@ -878,28 +975,28 @@ html, body {
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 0 8px;
+  padding: 0 10px;
 }
 
 .inputbar-btn {
-  height: 34px;
-  padding: 0 14px;
+  height: 32px;
+  padding: 0 12px;
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius);
   background: transparent;
   color: var(--text-secondary);
   font-family: inherit;
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: all 0.12s;
 }
 
 .inputbar-btn:hover { background: var(--bg); border-color: var(--border-strong); }
 .btn-inject:hover { background: var(--blue-light); color: var(--blue); border-color: var(--blue); }
 .btn-override:hover { background: var(--red-light); color: var(--red); border-color: var(--red); }
-.btn-speak:hover { background: var(--green-light); color: #16a34a; border-color: var(--green); }
-.btn-reload:hover { background: var(--amber-light); color: #b45309; border-color: var(--amber); }
+.btn-speak:hover { background: var(--green-light); color: var(--green); border-color: var(--green); }
+.btn-reload:hover { background: var(--amber-light); color: var(--amber); border-color: var(--amber); }
 
 .btn-inject:active, .btn-inject.sent { background: var(--blue); color: #fff; border-color: var(--blue); }
 .btn-override:active, .btn-override.sent { background: var(--red); color: #fff; border-color: var(--red); }
@@ -908,18 +1005,20 @@ html, body {
 
 .inputbar-btn.sent { transition: all 0.05s; }
 
-.inputbar.flash { animation: input-flash 0.4s ease; }
+.inputbar.flash { animation: input-flash 0.35s ease; }
 @keyframes input-flash {
   0% { background: var(--surface); }
-  20% { background: var(--blue-light); }
+  15% { background: var(--blue-light); }
   100% { background: var(--surface); }
 }
 
 .shortcut-hint {
   padding: 0 12px;
-  font-size: 11px;
+  font-size: 10px;
   color: var(--text-muted);
   white-space: nowrap;
+  font-family: var(--mono);
+  letter-spacing: 0;
 }
 
 /* Scroll pill */
@@ -949,7 +1048,7 @@ html, body {
 /* Ack toast */
 .ack-toast {
   position: fixed;
-  top: 68px;
+  top: 64px;
   right: 20px;
   padding: 10px 18px;
   border-radius: var(--radius);
@@ -958,18 +1057,19 @@ html, body {
   z-index: 100;
   opacity: 0;
   pointer-events: none;
-  transform: translateY(-4px);
+  transform: translateY(-6px);
   transition: opacity 0.2s ease, transform 0.2s ease;
   box-shadow: var(--shadow);
+  font-family: var(--mono);
 }
 
 .ack-toast.visible { opacity: 1; transform: translateY(0); }
-.ack-toast.ok { background: var(--green-light); color: #16a34a; border: 1px solid #bbf7d0; }
+.ack-toast.ok { background: var(--green-light); color: var(--green); border: 1px solid var(--green-mid); }
 .ack-toast.fail { background: var(--red-light); color: var(--red); border: 1px solid #fecaca; }
-.ack-toast.ok-inject { background: var(--blue-light); color: var(--blue); border: 1px solid #dbeafe; }
+.ack-toast.ok-inject { background: var(--blue-light); color: var(--blue); border: 1px solid var(--blue-mid); }
 .ack-toast.ok-override { background: var(--red-light); color: var(--red); border: 1px solid #fecaca; }
-.ack-toast.ok-speak { background: var(--green-light); color: #16a34a; border: 1px solid #bbf7d0; }
-.ack-toast.ok-reload { background: var(--amber-light); color: #b45309; border: 1px solid #fde68a; }
+.ack-toast.ok-speak { background: var(--green-light); color: var(--green); border: 1px solid var(--green-mid); }
+.ack-toast.ok-reload { background: var(--amber-light); color: var(--amber); border: 1px solid #fde68a; }
 </style>
 </head>
 <body>
@@ -1011,18 +1111,18 @@ html, body {
     <aside class="panel-calls">
       <div class="panel-header">
         <div>
-          <span class="panel-title">All Calls</span>
+          <span class="panel-title">Calls</span>
           <span class="call-count" id="callCount"></span>
         </div>
         <div class="launch-wrap">
           <button class="btn-launch" id="btnLaunch">
             <svg viewBox="0 0 20 20"><path d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"/></svg>
-            Launch Call
+            Launch
           </button>
           <div class="launch-menu" id="launchMenu">
             <button class="launch-option" data-domain="healthcare">
               <div class="launch-option-title">Medical Triage</div>
-              <div class="launch-option-desc">Patient escalates from headaches to drug interactions, suicidal ideation, and pregnancy medication questions</div>
+              <div class="launch-option-desc">Patient escalates from headaches to drug interactions, suicidal ideation, and pregnancy questions</div>
             </button>
             <button class="launch-option" data-domain="finance">
               <div class="launch-option-title">Financial Advisory</div>
@@ -1072,7 +1172,7 @@ html, body {
           <button class="inputbar-btn btn-speak" id="btnSpeak">Speak</button>
           <button class="inputbar-btn btn-reload" id="btnReload">Reload</button>
         </div>
-        <span class="shortcut-hint">Enter = inject &middot; Shift+Enter = override &middot; Ctrl+Enter = speak</span>
+        <span class="shortcut-hint">enter inject &middot; shift+enter override &middot; ctrl+enter speak</span>
       </div>
     </section>
 
@@ -1122,7 +1222,6 @@ html, body {
   var selectedCallId = null;
   var filterMode = "all";
   var drawerOpen = false;
-  // calls: Map<callId, {label, status, mode, agentState, transcripts[], verdicts[], guidanceRequests: Map, pendingVerdict, highestRisk}>
   var calls = new Map();
 
   function getCall(callId) {
@@ -1208,6 +1307,14 @@ html, body {
 
   var RISK_ORDER = { none: 0, low: 1, medium: 2, high: 3, critical: 4 };
 
+  // ── System event icons ──
+  var SYS_ICONS = {
+    inject: "I",
+    override: "O",
+    operator: "S",
+    toolcall: "T"
+  };
+
   function renderTranscriptItem(p, ts, call) {
     if (transcriptEmpty && transcriptEmpty.parentNode) transcriptEmpty.remove();
 
@@ -1216,6 +1323,8 @@ html, body {
     var isOperator = isSystem && p.text && p.text.indexOf("[OPERATOR]") === 0;
     var isInject = isSystem && p.text && p.text.indexOf("[INJECT]") === 0;
     var isOverride = isSystem && p.text && p.text.indexOf("[OVERRIDE]") === 0;
+    var isToolCall = isSystem && p.text && p.text.indexOf("[TOOL]") === 0;
+    var isSysEvent = isInject || isOverride || isOperator || isToolCall;
     var v = isAgent ? call.pendingVerdict : null;
     if (isAgent) call.pendingVerdict = null;
 
@@ -1223,14 +1332,36 @@ html, body {
     var flagged = v && (riskLevel === "high" || riskLevel === "critical" || riskLevel === "medium");
     var blocked = v && v.action === "block";
 
-    if (filterMode === "flagged" && !flagged && !isOperator && !isInject && !isOverride) return;
+    if (filterMode === "flagged" && !flagged && !isSysEvent) return;
 
     var el = document.createElement("div");
+
+    // System events get a completely different component
+    if (isSysEvent) {
+      var evtType = isInject ? "inject" : isOverride ? "override" : isToolCall ? "toolcall" : "operator";
+      var evtLabel = isInject ? "Inject" : isOverride ? "Override" : isToolCall ? "Tool Call" : "Operator";
+      var displayText = p.text;
+      if (isOperator) displayText = p.text.replace("[OPERATOR] ", "");
+      else if (isInject) displayText = p.text.replace("[INJECT] ", "");
+      else if (isOverride) displayText = p.text.replace("[OVERRIDE] ", "");
+      else if (isToolCall) displayText = p.text.replace("[TOOL] ", "");
+
+      el.className = "sys-event " + evtType;
+      el.innerHTML = '<div class="sys-icon">' + SYS_ICONS[evtType] + '</div>'
+        + '<div class="sys-body">'
+        + '<div class="sys-label">' + esc(evtLabel) + ' <span style="font-weight:400;opacity:0.6;font-size:10px">' + fmtTime(ts) + '</span></div>'
+        + '<div class="sys-text">' + esc(displayText) + '</div>'
+        + '</div>';
+
+      transcript.appendChild(el);
+      if (autoScroll) scrollBottom();
+      else scrollPill.classList.add("visible");
+      return;
+    }
+
+    // Chat messages
     var cls = "msg";
-    if (isInject) cls += " inject";
-    else if (isOverride) cls += " override";
-    else if (isOperator) cls += " operator";
-    else if (isSystem) cls += " system";
+    if (isSystem) cls += " system";
     else if (isAgent) cls += " agent";
     else cls += " user";
 
@@ -1238,16 +1369,12 @@ html, body {
     if (blocked) cls += " blocked";
     el.className = cls;
 
-    var speakerLabel = isOperator ? "Operator" : isInject ? "Inject" : isOverride ? "Override" : p.speaker;
+    var speakerLabel = isAgent ? "Agent" : p.speaker === "user" ? "Caller" : p.speaker;
     var html = '<div class="msg-meta">';
     html += '<span class="msg-speaker">' + esc(speakerLabel) + '</span>';
     html += '<span class="msg-time">' + fmtTime(ts) + '</span>';
     html += '</div>';
-    var displayText = p.text;
-    if (isOperator) displayText = p.text.replace("[OPERATOR] ", "");
-    else if (isInject) displayText = p.text.replace("[INJECT] ", "");
-    else if (isOverride) displayText = p.text.replace("[OVERRIDE] ", "");
-    html += '<span class="msg-text">' + esc(displayText) + '</span>';
+    html += '<span class="msg-text">' + esc(p.text) + '</span>';
 
     if (blocked && v.corrective_instruction) {
       html += '<span class="corrective">' + esc(v.corrective_instruction) + '</span>';
@@ -1261,7 +1388,7 @@ html, body {
       html += '</div>';
       html += '<div class="verdict-detail" id="' + vid + '">';
       if (v.reasoning) html += '<div class="verdict-reasoning">' + esc(v.reasoning) + '</div>';
-      if (v.corrective_instruction && !blocked) html += '<div style="color:#166534;margin-top:4px">' + esc(v.corrective_instruction) + '</div>';
+      if (v.corrective_instruction && !blocked) html += '<div style="margin-top:4px">' + esc(v.corrective_instruction) + '</div>';
       html += '</div>';
     }
 
@@ -1289,7 +1416,6 @@ html, body {
     c.pendingVerdict = p;
     c.verdicts.unshift({ v: p, ts: ts });
 
-    // Track highest risk for call card dot
     if ((RISK_ORDER[p.risk_level] || 0) > (RISK_ORDER[c.highestRisk] || 0)) {
       c.highestRisk = p.risk_level;
     }
@@ -1523,7 +1649,6 @@ html, body {
       if (lastText) html += '<div class="call-snippet">' + esc(lastText) + '</div>';
       html += '</div>';
 
-      // Risk indicator dot
       if (c.highestRisk && c.highestRisk !== "none" && c.highestRisk !== "low") {
         html += '<div class="call-risk"><div class="call-risk-dot ' + c.highestRisk + '"></div></div>';
       }
@@ -1534,7 +1659,6 @@ html, body {
     callsList.innerHTML = html || '<div class="calls-empty">No active calls</div>';
     callCount.textContent = count > 0 ? count : "";
 
-    // Wire clicks
     callsList.querySelectorAll(".call-card").forEach(function(el){
       el.addEventListener("click", function(){
         selectCall(el.getAttribute("data-cid"));
