@@ -178,12 +178,6 @@ class SteeredAgent(Agent):
         tools: list[FunctionTool],
         model_settings: ModelSettings,
     ):
-        # DECISION: In takeover mode, the agent stays completely silent.
-        # The operator speaks directly via the SPEAK command.
-        if self._mode == "takeover":
-            await self._broadcast_state("listening")
-            return
-
         turn_id = str(uuid.uuid4())
         self._evaluator.start_evaluation(turn_id, chat_ctx)
         accumulated_text = ""
@@ -234,12 +228,6 @@ class SteeredAgent(Agent):
             ctx = self._ctx_mgr.get(self._call_id)
             if ctx:
                 ctx.record_verdict(verdict)
-                if ctx.should_escalate(verdict, self._policy.escalation if self._policy else None):
-                    self._mode = "human"
-                    logger.info("Auto-escalation triggered for call %s", self._call_id)
-                    if self._audit:
-                        self._audit.log_escalation(self._call_id, reason="auto-escalation: context risk threshold")
-                    await self._broadcast_context_update(ctx)
             if self._recorder:
                 self._recorder.record_verdict(verdict, self._call_id)
             if self._audit:
@@ -317,18 +305,13 @@ class SteeredAgent(Agent):
             return
         if verdict.action == Action.MODIFY:
             self._pending_instruction = verdict.corrective_instruction
-        elif verdict.action == Action.BLOCK:
+        elif verdict.action in (Action.BLOCK, Action.ESCALATE):
             await self.session.interrupt()
-            if verdict.corrective_instruction:
-                self.session.say(verdict.corrective_instruction)
-        elif verdict.action == Action.ESCALATE:
-            self._mode = "human"
-            if self._audit:
-                self._audit.log_escalation(self._call_id, reason=verdict.reasoning)
-            await self.session.interrupt()
-            if verdict.corrective_instruction:
-                self.session.say(verdict.corrective_instruction)
-            await self._broadcast_state("listening")
+            corrective = verdict.corrective_instruction or (
+                "Your previous response was flagged as unsafe. "
+                "Rephrase your answer following your safety guidelines."
+            )
+            self.session.generate_reply(instructions=corrective)
 
     # ── Broadcast helpers (guard for optional monitor/dashboard) ──
 
@@ -384,10 +367,11 @@ class SteeredAgent(Agent):
     def handle_inject_instruction(self, instruction: str, call_id: str) -> None:
         if call_id and call_id != self._call_id:
             return
-        self._pending_instruction = instruction
         if self._audit:
             self._audit.log_intervention(self._call_id, intervention_type="inject", instruction=instruction)
-        # Broadcast to dashboard so operator sees feedback
+        asyncio.create_task(self._do_inject(instruction))
+
+    async def _do_inject(self, instruction: str) -> None:
         event = TranscriptEvent(
             speaker=Speaker.SYSTEM,
             text=f"[INJECT] {instruction}",
@@ -395,7 +379,9 @@ class SteeredAgent(Agent):
             turn_id=str(uuid.uuid4()),
             call_id=self._call_id,
         )
-        asyncio.create_task(self._broadcast_transcript(event))
+        await self._broadcast_transcript(event)
+        await self.session.interrupt()
+        self.session.generate_reply(instructions=instruction)
         logger.info("Operator injected instruction: %s", instruction[:100])
 
     def handle_interrupt_and_replace(self, instruction: str, call_id: str) -> None:
@@ -420,26 +406,11 @@ class SteeredAgent(Agent):
     def handle_set_mode(self, mode: str, call_id: str) -> None:
         if call_id and call_id != self._call_id:
             return
-        prev_mode = self._mode
         self._mode = mode
         if self._audit:
             self._audit.log_intervention(self._call_id, intervention_type="mode_change", instruction=f"Mode -> {mode}")
-        if mode == "takeover" and prev_mode != "takeover":
-            asyncio.create_task(self._enter_takeover())
-        elif prev_mode == "takeover" and mode != "takeover":
-            # Re-enable agent audio input when leaving takeover
-            self.session.input.set_audio_enabled(True)
-            asyncio.create_task(self._broadcast_state("listening"))
-        else:
-            asyncio.create_task(self._broadcast_state("listening"))
+        asyncio.create_task(self._broadcast_state("listening"))
         logger.info("Mode switched to: %s", mode)
-
-    async def _enter_takeover(self) -> None:
-        await self.session.interrupt()
-        # DECISION: Disable agent audio input so it doesn't react to operator's voice.
-        # This is LiveKit's recommended approach for pausing agent processing.
-        self.session.input.set_audio_enabled(False)
-        await self._broadcast_state("listening")
 
     def handle_operator_speak(self, text: str, call_id: str) -> None:
         if call_id and call_id != self._call_id:
