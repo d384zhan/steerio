@@ -2,7 +2,7 @@
 
 Real-time steering SDK for voice AI agents. Evaluates every response with an LLM judge, auto-corrects unsafe output mid-call, and gives human operators live control.
 
-[![Watch the video](https://img.youtube.com)](https://youtu.be/GvnhVDj7t-o)
+[![Watch the video](https://img.youtube.com)](https://youtu.be/NliTpEFsHb8)
 
 
 ## Quick Start
