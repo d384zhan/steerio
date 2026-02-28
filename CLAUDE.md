@@ -90,13 +90,11 @@ steerio/                 # SDK — pip install steerio
     ├── schema.sql       # Database schema (3 tables)
     └── seed.sql         # Seed data for demo
 
-dashboard/               # Operator UI (separate from SDK)
-├── server.py            # Bidirectional WebSocket server (port 8766)
-└── index.html           # Frontend (brutalist theme, single HTML)
-
 demo/                    # Demo application (shows production usage)
 ├── demo_eval.py         # Policy evaluation — loads from Supabase
 ├── demo_voice.py        # Voice demo — two agents in LiveKit Cloud room
+├── dashboard.py         # Bidirectional WebSocket server (port 8766)
+├── dashboard.html       # Frontend (single HTML, modern light theme)
 ├── caller.py            # AI caller agent for voice demo
 ├── scenarios.py         # Test scenarios for all 3 domains
 └── .env                 # API keys (gitignored)

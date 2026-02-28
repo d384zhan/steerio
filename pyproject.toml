@@ -17,6 +17,7 @@ demo = [
     "livekit",
     "livekit-plugins-openai",
     "livekit-plugins-elevenlabs",
+    "livekit-plugins-silero",
     "livekit-api",
     "openai>=1.0.0",
     "python-dotenv",

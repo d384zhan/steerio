@@ -16,7 +16,7 @@ from steerio.protocol import GuidanceRequest, TranscriptEvent, Verdict, WsMessag
 
 logger = logging.getLogger(__name__)
 
-DASHBOARD_HTML = pathlib.Path(__file__).parent / "index.html"
+DASHBOARD_HTML = pathlib.Path(__file__).parent / "dashboard.html"
 
 
 class Dashboard:
@@ -31,6 +31,8 @@ class Dashboard:
         on_guidance_response: Callable[[str, str], None] | None = None,
         on_reload_policy: Callable[[str], None] | None = None,
         on_operator_speak: Callable[[str, str], None] | None = None,
+        on_custom_command: Callable[[str, dict], None] | None = None,
+        html_path: pathlib.Path | None = None,
     ):
         self._port = port
         self._clients: set[ServerConnection] = set()
@@ -42,6 +44,8 @@ class Dashboard:
         self._on_guidance_response = on_guidance_response
         self._on_reload_policy = on_reload_policy
         self._on_operator_speak = on_operator_speak
+        self._on_custom_command = on_custom_command
+        self._html_path = html_path or DASHBOARD_HTML
 
     def register_handlers(
         self,
@@ -53,11 +57,9 @@ class Dashboard:
         on_guidance_response: Callable[[str, str], None] | None = None,
         on_reload_policy: Callable[[str], None] | None = None,
         on_operator_speak: Callable[[str, str], None] | None = None,
+        on_custom_command: Callable[[str, dict], None] | None = None,
     ):
-        """Register operator command handlers after construction.
-
-        Called by SteeredAgent to wire its callbacks into the dashboard.
-        """
+        """Register operator command handlers after construction."""
         if on_inject_instruction:
             self._on_inject_instruction = on_inject_instruction
         if on_interrupt_and_replace:
@@ -72,6 +74,8 @@ class Dashboard:
             self._on_reload_policy = on_reload_policy
         if on_operator_speak:
             self._on_operator_speak = on_operator_speak
+        if on_custom_command:
+            self._on_custom_command = on_custom_command
 
     async def start(self) -> None:
         self._server = await websockets.serve(
@@ -92,11 +96,14 @@ class Dashboard:
     def _serve_html(self, connection: ServerConnection, request: Request) -> Response | None:
         if request.path == "/" or request.path == "/index.html":
             try:
-                html = DASHBOARD_HTML.read_text()
+                html = self._html_path.read_text()
                 return Response(200, "OK", websockets.Headers({"Content-Type": "text/html"}), html.encode())
             except FileNotFoundError:
                 return Response(404, "Not Found", websockets.Headers(), b"Dashboard HTML not found")
-        return None
+        if request.path == "/ws":
+            return None  # proceed with WebSocket upgrade
+        # Reject non-WebSocket HTTP requests (favicon, etc.) to avoid handshake errors
+        return Response(404, "Not Found", websockets.Headers(), b"")
 
     async def _handle_connection(self, ws: ServerConnection) -> None:
         self._clients.add(ws)
@@ -110,14 +117,14 @@ class Dashboard:
             self._clients.discard(ws)
 
     async def _handle_command(self, ws: ServerConnection, raw: str) -> None:
+        import json as _json
         try:
-            msg = WsMessage.from_json(raw)
+            data = _json.loads(raw)
+            command = data["type"]
+            payload = data.get("payload", {})
         except (ValueError, KeyError):
             await self._send_ack(ws, "unknown", ok=False)
             return
-
-        command = msg.type.value
-        payload = msg.payload
 
         if command == WsMsgType.INJECT_INSTRUCTION.value:
             if self._on_inject_instruction:
@@ -197,7 +204,15 @@ class Dashboard:
                 await self._send_ack(ws, command, ok=False)
 
         else:
-            await self._send_ack(ws, command, ok=False)
+            if self._on_custom_command:
+                try:
+                    self._on_custom_command(command, payload)
+                    await self._send_ack(ws, command, ok=True)
+                except Exception:
+                    logger.exception("custom command '%s' handler failed", command)
+                    await self._send_ack(ws, command, ok=False)
+            else:
+                await self._send_ack(ws, command, ok=False)
 
     async def _send_ack(self, ws: ServerConnection, command: str, *, ok: bool) -> None:
         msg = WsMessage(type=WsMsgType.ACK, payload={"command": command, "ok": ok})

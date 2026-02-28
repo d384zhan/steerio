@@ -72,16 +72,6 @@ class SteeredAgent(Agent):
         # Tradeoff: Slightly more guard checks, but the SDK works standalone.
         self._monitor = TranscriptionMonitor(port=monitor_port) if monitor_port else None
         self._dashboard = dashboard
-        if dashboard:
-            dashboard.register_handlers(
-                on_inject_instruction=self._handle_inject_instruction,
-                on_interrupt_and_replace=self._handle_interrupt_and_replace,
-                on_set_mode=self._handle_set_mode,
-                on_update_judge_prompt=self._handle_update_judge_prompt,
-                on_guidance_response=self._handle_guidance_response,
-                on_reload_policy=self._handle_reload_policy,
-                on_operator_speak=self._handle_operator_speak,
-            )
 
         # Analytics
         self._metrics = MetricsCollector()
@@ -136,8 +126,6 @@ class SteeredAgent(Agent):
 
         if self._monitor:
             await self._monitor.start()
-        if self._dashboard:
-            await self._dashboard.start()
         await self._broadcast_call_started(self._call_id)
         await self._broadcast_state("listening")
         self.session.generate_reply()
@@ -156,8 +144,6 @@ class SteeredAgent(Agent):
         await self._broadcast_call_ended(self._call_id)
         if self._monitor:
             await self._monitor.stop()
-        if self._dashboard:
-            await self._dashboard.stop()
 
     async def on_user_turn_completed(
         self,
@@ -394,17 +380,26 @@ class SteeredAgent(Agent):
         if self._dashboard:
             await self._dashboard.broadcast_call_ended(call_id)
 
-    # ── Operator command handlers (only relevant when dashboard is connected) ──
+    # ── Operator command handlers (public API for control layer wiring) ──
 
-    def _handle_inject_instruction(self, instruction: str, call_id: str) -> None:
+    def handle_inject_instruction(self, instruction: str, call_id: str) -> None:
         if call_id and call_id != self._call_id:
             return
         self._pending_instruction = instruction
         if self._audit:
             self._audit.log_intervention(self._call_id, intervention_type="inject", instruction=instruction)
+        # Broadcast to dashboard so operator sees feedback
+        event = TranscriptEvent(
+            speaker=Speaker.SYSTEM,
+            text=f"[INJECT] {instruction}",
+            is_final=True,
+            turn_id=str(uuid.uuid4()),
+            call_id=self._call_id,
+        )
+        asyncio.create_task(self._broadcast_transcript(event))
         logger.info("Operator injected instruction: %s", instruction[:100])
 
-    def _handle_interrupt_and_replace(self, instruction: str, call_id: str) -> None:
+    def handle_interrupt_and_replace(self, instruction: str, call_id: str) -> None:
         if call_id and call_id != self._call_id:
             return
         if self._audit:
@@ -412,10 +407,18 @@ class SteeredAgent(Agent):
         asyncio.create_task(self._do_interrupt_and_replace(instruction))
 
     async def _do_interrupt_and_replace(self, instruction: str) -> None:
+        event = TranscriptEvent(
+            speaker=Speaker.SYSTEM,
+            text=f"[OVERRIDE] {instruction}",
+            is_final=True,
+            turn_id=str(uuid.uuid4()),
+            call_id=self._call_id,
+        )
+        await self._broadcast_transcript(event)
         await self.session.interrupt()
         self.session.generate_reply(instructions=instruction)
 
-    def _handle_set_mode(self, mode: str, call_id: str) -> None:
+    def handle_set_mode(self, mode: str, call_id: str) -> None:
         if call_id and call_id != self._call_id:
             return
         prev_mode = self._mode
@@ -439,7 +442,7 @@ class SteeredAgent(Agent):
         self.session.input.set_audio_enabled(False)
         await self._broadcast_state("listening")
 
-    def _handle_operator_speak(self, text: str, call_id: str) -> None:
+    def handle_operator_speak(self, text: str, call_id: str) -> None:
         if call_id and call_id != self._call_id:
             return
         if self._audit:
@@ -463,11 +466,11 @@ class SteeredAgent(Agent):
         self.session.say(text)
         logger.info("Operator speaking: %s", text[:100])
 
-    def _handle_update_judge_prompt(self, prompt: str) -> None:
+    def handle_update_judge_prompt(self, prompt: str) -> None:
         if isinstance(self._evaluator, Judge):
             self._evaluator.update_system_prompt(prompt)
 
-    def _handle_reload_policy(self, call_id: str) -> None:
+    def handle_reload_policy(self, call_id: str) -> None:
         if self._store and self._policy_id:
             asyncio.create_task(self._load_from_store())
             logger.info("Policy reload triggered for %s", self._policy_id)
@@ -480,7 +483,7 @@ class SteeredAgent(Agent):
         )
         logger.info("Loaded policy '%s' from store", policy.name)
 
-    def _handle_guidance_response(self, request_id: str, response: str) -> None:
+    def handle_guidance_response(self, request_id: str, response: str) -> None:
         future = self._guidance_futures.get(request_id)
         if future and not future.done():
             future.set_result(response)

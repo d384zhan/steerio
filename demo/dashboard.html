@@ -1,0 +1,1697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Steerio Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #fafafa;
+  --surface: #ffffff;
+  --text: #1a1a1a;
+  --text-secondary: #666666;
+  --text-muted: #999999;
+  --border: #e5e7eb;
+  --border-strong: #d1d5db;
+  --blue: #3b82f6;
+  --blue-light: #eff6ff;
+  --amber: #f59e0b;
+  --amber-light: #fffbeb;
+  --amber-bg: #fef3c7;
+  --red: #ef4444;
+  --red-light: #fef2f2;
+  --orange: #f97316;
+  --orange-light: #fff7ed;
+  --green: #22c55e;
+  --green-light: #f0fdf4;
+  --slate: #64748b;
+  --radius: 8px;
+  --radius-sm: 6px;
+  --radius-lg: 12px;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+  --shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+}
+
+html, body {
+  height: 100%;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  overflow: hidden;
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Layout */
+.app {
+  display: grid;
+  grid-template-rows: 56px 1fr;
+  height: 100vh;
+  width: 100vw;
+}
+
+.main {
+  display: grid;
+  grid-template-columns: 2fr 1px 3fr;
+  overflow: hidden;
+}
+
+/* Top Bar */
+.topbar {
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  gap: 16px;
+}
+
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo {
+  font-weight: 700;
+  font-size: 18px;
+  color: var(--text);
+  letter-spacing: -0.5px;
+}
+
+.logo span {
+  color: var(--blue);
+}
+
+.conn-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 100px;
+  font-size: 11px;
+  font-weight: 500;
+  background: var(--bg);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+
+.conn-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--text-muted);
+}
+
+.conn-pill.connected .conn-dot { background: var(--green); }
+.conn-pill.connected { color: var(--green); border-color: var(--green); background: var(--green-light); }
+.conn-pill.disconnected .conn-dot { background: var(--red); }
+.conn-pill.disconnected { color: var(--red); border-color: var(--red); background: var(--red-light); }
+
+.topbar-center {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.call-info {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.call-info:empty::after {
+  content: "No call selected";
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.state-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 100px;
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--bg);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+
+.state-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--text-muted);
+}
+
+.state-badge[data-state="listening"] .state-dot { background: var(--green); animation: pulse 2s infinite; }
+.state-badge[data-state="thinking"] .state-dot { background: var(--amber); animation: blink 0.5s step-start infinite; }
+.state-badge[data-state="speaking"] .state-dot { background: var(--blue); animation: pulse 1s infinite; }
+.state-badge[data-state="waiting"] .state-dot { background: var(--amber); animation: pulse 1.2s infinite; }
+.state-badge[data-state="takeover"] .state-dot { background: var(--red); animation: pulse 1.5s infinite; }
+
+.judge-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 100px;
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--bg);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+
+.judge-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--text-muted);
+}
+
+.judge-badge[data-judge="evaluating"] .judge-dot { background: var(--amber); animation: blink 0.4s step-start infinite; }
+.judge-badge[data-judge="evaluating"] { color: var(--amber); border-color: var(--amber); background: var(--amber-light); }
+.judge-badge[data-judge="rule_caught"] .judge-dot { background: var(--red); }
+.judge-badge[data-judge="rule_caught"] { color: var(--red); border-color: var(--red); background: var(--red-light); }
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Segmented mode control */
+.mode-toggle {
+  display: flex;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: var(--bg);
+}
+
+.mode-btn {
+  padding: 6px 14px;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.mode-btn + .mode-btn { border-left: 1px solid var(--border); }
+
+.mode-btn:hover { background: var(--border); }
+.mode-btn.active-llm { background: var(--blue); color: white; }
+.mode-btn.active-human { background: var(--amber); color: white; }
+.mode-btn.active-takeover { background: var(--red); color: white; }
+
+@keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
+@keyframes blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
+@keyframes pulse-amber { 0%, 100% { box-shadow: 0 0 0 0 rgba(245,158,11,0.4); } 50% { box-shadow: 0 0 0 4px rgba(245,158,11,0); } }
+
+/* Left Panel: Calls */
+.panel-calls {
+  background: var(--surface);
+  border-right: none;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 16px 12px;
+  flex-shrink: 0;
+}
+
+.panel-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.call-count {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 500;
+  margin-left: 6px;
+}
+
+/* Launch dropdown */
+.launch-wrap {
+  position: relative;
+}
+
+.btn-launch {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--blue);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.btn-launch:hover { background: #2563eb; }
+.btn-launch:disabled { opacity: 0.5; cursor: default; }
+
+.btn-launch svg {
+  width: 14px;
+  height: 14px;
+  fill: currentColor;
+}
+
+.launch-menu {
+  display: none;
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  min-width: 220px;
+  z-index: 100;
+  overflow: hidden;
+}
+
+.launch-menu.open { display: block; }
+
+.launch-option {
+  display: block;
+  width: 100%;
+  padding: 10px 14px;
+  border: none;
+  background: transparent;
+  text-align: left;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.launch-option:hover { background: var(--bg); }
+.launch-option + .launch-option { border-top: 1px solid var(--border); }
+
+.launch-option-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.launch-option-desc {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* Call list */
+.calls-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 8px 8px;
+}
+
+.calls-list::-webkit-scrollbar { width: 4px; }
+.calls-list::-webkit-scrollbar-track { background: transparent; }
+.calls-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+.calls-empty {
+  padding: 32px 16px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.call-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  margin-bottom: 2px;
+  transition: background 0.1s;
+}
+
+.call-card:hover { background: var(--bg); }
+.call-card.selected { background: var(--blue-light); }
+.call-card.ended { opacity: 0.5; }
+
+.call-dot-wrap {
+  padding-top: 4px;
+  flex-shrink: 0;
+}
+
+.call-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--green);
+}
+
+.call-card.ended .call-dot { background: var(--text-muted); }
+.call-card.waiting .call-dot { background: var(--amber); animation: pulse 1.2s infinite; }
+
+.call-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.call-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.call-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.call-mode-badge {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 100px;
+  text-transform: uppercase;
+}
+
+.call-mode-badge.llm { background: var(--blue-light); color: var(--blue); }
+.call-mode-badge.human { background: var(--amber-light); color: #b45309; }
+.call-mode-badge.takeover { background: var(--red-light); color: var(--red); }
+
+.call-snippet {
+  font-size: 12px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 3px;
+}
+
+.call-risk {
+  flex-shrink: 0;
+  padding-top: 2px;
+}
+
+.call-risk-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.call-risk-dot.medium { background: var(--amber); }
+.call-risk-dot.high { background: var(--orange); }
+.call-risk-dot.critical { background: var(--red); }
+
+/* Panel divider */
+.panel-divider {
+  background: var(--border);
+}
+
+/* Right Panel: Detail */
+.panel-detail {
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+.detail-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 0;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.filter-tab {
+  padding: 10px 18px;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.15s;
+}
+
+.filter-tab:hover { color: var(--text-secondary); }
+.filter-tab.active { color: var(--text); border-bottom-color: var(--blue); font-weight: 600; }
+.filter-tab.active-flagged { color: var(--red); border-bottom-color: var(--red); font-weight: 600; }
+
+.toolbar-spacer { flex: 1; }
+
+.btn-verdict-history {
+  padding: 6px 12px;
+  margin-right: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn-verdict-history:hover { background: var(--bg); border-color: var(--border-strong); }
+.btn-verdict-history.active { background: var(--blue-light); color: var(--blue); border-color: var(--blue); }
+
+/* Transcript */
+.transcript {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.transcript::-webkit-scrollbar { width: 5px; }
+.transcript::-webkit-scrollbar-track { background: transparent; }
+.transcript::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+.transcript-empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+/* Messages */
+.msg {
+  max-width: 80%;
+  padding: 8px 14px;
+  border-radius: var(--radius-lg);
+  font-size: 14px;
+  line-height: 1.55;
+  word-break: break-word;
+  animation: fadeIn 0.15s ease;
+  border-left: 3px solid transparent;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.msg.user {
+  align-self: flex-start;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--border-strong);
+}
+
+.msg.agent {
+  align-self: flex-end;
+  background: var(--blue-light);
+  border: 1px solid #dbeafe;
+  border-left: none;
+  border-right: 3px solid var(--blue);
+}
+
+.msg.system {
+  align-self: center;
+  background: var(--bg);
+  border: 1px dashed var(--border-strong);
+  color: var(--text-secondary);
+  max-width: 85%;
+  text-align: center;
+  border-left: none;
+}
+
+.msg.operator {
+  align-self: center;
+  background: var(--green-light);
+  border: 1px solid #bbf7d0;
+  max-width: 85%;
+  border-left: 3px solid var(--green);
+}
+
+.msg.inject {
+  align-self: center;
+  background: var(--blue-light);
+  border: 1px solid #dbeafe;
+  max-width: 85%;
+  border-left: 3px solid var(--blue);
+}
+.msg.inject .msg-speaker { color: var(--blue); }
+
+.msg.override {
+  align-self: center;
+  background: var(--red-light);
+  border: 1px solid #fecaca;
+  max-width: 85%;
+  border-left: 3px solid var(--red);
+}
+.msg.override .msg-speaker { color: var(--red); }
+
+/* Risk-based message styling */
+.msg.risk-low { border-left-color: var(--slate); }
+.msg.risk-medium { border-left-color: var(--amber); background: var(--amber-light); }
+.msg.risk-high { border-left-color: var(--orange); background: var(--orange-light); }
+.msg.risk-critical { border-left-color: var(--red); background: var(--red-light); }
+.msg.blocked { border-left-color: var(--red); background: var(--red-light); border-left-width: 4px; }
+.msg.blocked .msg-text { text-decoration: line-through; opacity: 0.5; }
+
+.msg-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 3px;
+}
+
+.msg-speaker {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: capitalize;
+}
+
+.msg-time {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.msg.operator .msg-speaker { color: #16a34a; }
+
+/* Inline verdict badge */
+.verdict-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 6px;
+  padding: 2px 8px;
+  border-radius: 100px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.verdict-badge.risk-low { background: #f1f5f9; color: var(--slate); }
+.verdict-badge.risk-medium { background: var(--amber-bg); color: #92400e; }
+.verdict-badge.risk-high { background: #fed7aa; color: #9a3412; }
+.verdict-badge.risk-critical { background: #fecaca; color: #991b1b; }
+
+.verdict-badge:hover { filter: brightness(0.95); }
+
+.verdict-detail {
+  display: none;
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.verdict-detail.open { display: block; }
+
+.verdict-reasoning { margin-bottom: 4px; }
+
+.corrective {
+  display: block;
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: var(--green-light);
+  border: 1px solid #bbf7d0;
+  border-radius: var(--radius-sm);
+  color: #166534;
+  font-size: 13px;
+}
+
+/* Guidance card */
+.guidance-card {
+  align-self: center;
+  max-width: 90%;
+  width: 100%;
+  padding: 14px 16px;
+  border: 2px solid var(--amber);
+  background: var(--amber-light);
+  border-radius: var(--radius-lg);
+  animation: fadeIn 0.15s ease;
+}
+
+.guidance-card.resolved {
+  border-color: var(--border);
+  background: var(--bg);
+  opacity: 0.6;
+}
+
+.guidance-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.guidance-pulse {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--amber);
+  animation: pulse-amber 1.5s infinite;
+}
+
+.guidance-card.resolved .guidance-pulse { display: none; }
+
+.guidance-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: #92400e;
+}
+
+.guidance-card.resolved .guidance-label { color: var(--green); }
+
+.guidance-question {
+  font-size: 14px;
+  color: var(--text);
+  margin-bottom: 10px;
+  line-height: 1.5;
+}
+
+.guidance-input-row {
+  display: flex;
+  gap: 8px;
+}
+
+.guidance-input {
+  flex: 1;
+  height: 36px;
+  padding: 0 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 13px;
+  outline: none;
+}
+
+.guidance-input:focus { border-color: var(--amber); box-shadow: 0 0 0 2px rgba(245,158,11,0.2); }
+
+.guidance-send {
+  height: 36px;
+  padding: 0 16px;
+  background: var(--amber);
+  border: none;
+  border-radius: var(--radius-sm);
+  color: white;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.guidance-send:hover { background: #d97706; }
+
+.guidance-sent {
+  font-size: 13px;
+  color: var(--green);
+  margin-top: 8px;
+  font-weight: 500;
+}
+
+/* Verdict History Drawer */
+.verdict-drawer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  box-shadow: 0 -4px 12px rgba(0,0,0,0.08);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  transform: translateY(100%);
+  transition: transform 0.25s ease;
+  max-height: 45%;
+  display: flex;
+  flex-direction: column;
+  z-index: 10;
+}
+
+.verdict-drawer.open { transform: translateY(0); }
+
+.drawer-handle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  cursor: pointer;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.drawer-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.drawer-close {
+  border: none;
+  background: transparent;
+  font-size: 18px;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+.verdict-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 20px 16px;
+}
+
+.verdict-list::-webkit-scrollbar { width: 4px; }
+.verdict-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+.vh-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+
+.vh-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.vh-dot.none { background: var(--green); }
+.vh-dot.low { background: var(--slate); }
+.vh-dot.medium { background: var(--amber); }
+.vh-dot.high { background: var(--orange); }
+.vh-dot.critical { background: var(--red); }
+
+.vh-action {
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.vh-reason {
+  flex: 1;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+}
+
+.vh-time {
+  font-size: 11px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+/* Input Bar */
+.inputbar {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.inputbar input {
+  flex: 1;
+  height: 48px;
+  padding: 0 16px;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 14px;
+  outline: none;
+}
+
+.inputbar input::placeholder { color: var(--text-muted); }
+
+.inputbar-buttons {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 8px;
+}
+
+.inputbar-btn {
+  height: 34px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.inputbar-btn:hover { background: var(--bg); border-color: var(--border-strong); }
+.btn-inject:hover { background: var(--blue-light); color: var(--blue); border-color: var(--blue); }
+.btn-override:hover { background: var(--red-light); color: var(--red); border-color: var(--red); }
+.btn-speak:hover { background: var(--green-light); color: #16a34a; border-color: var(--green); }
+.btn-reload:hover { background: var(--amber-light); color: #b45309; border-color: var(--amber); }
+
+.btn-inject:active, .btn-inject.sent { background: var(--blue); color: #fff; border-color: var(--blue); }
+.btn-override:active, .btn-override.sent { background: var(--red); color: #fff; border-color: var(--red); }
+.btn-speak:active, .btn-speak.sent { background: var(--green); color: #fff; border-color: var(--green); }
+.btn-reload:active, .btn-reload.sent { background: var(--amber); color: #fff; border-color: var(--amber); }
+
+.inputbar-btn.sent { transition: all 0.05s; }
+
+.inputbar.flash { animation: input-flash 0.4s ease; }
+@keyframes input-flash {
+  0% { background: var(--surface); }
+  20% { background: var(--blue-light); }
+  100% { background: var(--surface); }
+}
+
+.shortcut-hint {
+  padding: 0 12px;
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* Scroll pill */
+.scroll-pill {
+  position: absolute;
+  bottom: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--surface);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  padding: 6px 16px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  z-index: 10;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+  box-shadow: var(--shadow);
+}
+
+.scroll-pill.visible { opacity: 1; pointer-events: auto; }
+.scroll-pill:hover { background: var(--bg); }
+
+/* Ack toast */
+.ack-toast {
+  position: fixed;
+  top: 68px;
+  right: 20px;
+  padding: 10px 18px;
+  border-radius: var(--radius);
+  font-size: 12px;
+  font-weight: 600;
+  z-index: 100;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-4px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  box-shadow: var(--shadow);
+}
+
+.ack-toast.visible { opacity: 1; transform: translateY(0); }
+.ack-toast.ok { background: var(--green-light); color: #16a34a; border: 1px solid #bbf7d0; }
+.ack-toast.fail { background: var(--red-light); color: var(--red); border: 1px solid #fecaca; }
+.ack-toast.ok-inject { background: var(--blue-light); color: var(--blue); border: 1px solid #dbeafe; }
+.ack-toast.ok-override { background: var(--red-light); color: var(--red); border: 1px solid #fecaca; }
+.ack-toast.ok-speak { background: var(--green-light); color: #16a34a; border: 1px solid #bbf7d0; }
+.ack-toast.ok-reload { background: var(--amber-light); color: #b45309; border: 1px solid #fde68a; }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <header class="topbar">
+    <div class="topbar-left">
+      <span class="logo">steer<span>io</span></span>
+      <div class="conn-pill" id="connPill">
+        <div class="conn-dot"></div>
+        <span id="connLabel">Connecting</span>
+      </div>
+    </div>
+
+    <div class="topbar-center">
+      <span class="call-info" id="callInfo"></span>
+      <div class="state-badge" id="stateBadge" data-state="">
+        <div class="state-dot"></div>
+        <span id="stateLabel">&mdash;</span>
+      </div>
+      <div class="judge-badge" id="judgeBadge" data-judge="idle">
+        <div class="judge-dot"></div>
+        <span id="judgeLabel">Judge idle</span>
+      </div>
+    </div>
+
+    <div class="topbar-right">
+      <div class="mode-toggle" id="modeToggle">
+        <button class="mode-btn active-llm" data-mode="llm">LLM</button>
+        <button class="mode-btn" data-mode="human">Human</button>
+        <button class="mode-btn" data-mode="takeover">Takeover</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="main">
+
+    <aside class="panel-calls">
+      <div class="panel-header">
+        <div>
+          <span class="panel-title">All Calls</span>
+          <span class="call-count" id="callCount"></span>
+        </div>
+        <div class="launch-wrap">
+          <button class="btn-launch" id="btnLaunch">
+            <svg viewBox="0 0 20 20"><path d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"/></svg>
+            Launch Call
+          </button>
+          <div class="launch-menu" id="launchMenu">
+            <button class="launch-option" data-domain="healthcare">
+              <div class="launch-option-title">Medical Triage</div>
+              <div class="launch-option-desc">Patient escalates from headaches to drug interactions, suicidal ideation, and pregnancy medication questions</div>
+            </button>
+            <button class="launch-option" data-domain="finance">
+              <div class="launch-option-title">Financial Advisory</div>
+              <div class="launch-option-desc">Customer pushes for stock picks, insider trading, tax loopholes, and guaranteed returns</div>
+            </button>
+            <button class="launch-option" data-domain="legal">
+              <div class="launch-option-title">Legal Consultation</div>
+              <div class="launch-option-desc">Client demands specific legal advice, asks about recording laws, and wants outcome predictions</div>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="calls-list" id="callsList">
+        <div class="calls-empty" id="callsEmpty">No active calls</div>
+      </div>
+    </aside>
+
+    <div class="panel-divider"></div>
+
+    <section class="panel-detail">
+      <div class="detail-toolbar">
+        <button class="filter-tab active" id="filterAll">All</button>
+        <button class="filter-tab" id="filterFlagged">Flagged</button>
+        <div class="toolbar-spacer"></div>
+        <button class="btn-verdict-history" id="btnVerdictHistory">Verdict History</button>
+      </div>
+
+      <div class="transcript" id="transcript">
+        <div class="transcript-empty" id="transcriptEmpty">Select a call to view transcript</div>
+      </div>
+
+      <div class="scroll-pill" id="scrollPill">New messages</div>
+
+      <div class="verdict-drawer" id="verdictDrawer">
+        <div class="drawer-handle" id="drawerHandle">
+          <span class="drawer-title">Verdict History</span>
+          <button class="drawer-close">&times;</button>
+        </div>
+        <div class="verdict-list" id="verdictList"></div>
+      </div>
+
+      <div class="inputbar">
+        <input type="text" id="cmdInput" placeholder="Operator instruction..." autocomplete="off" />
+        <div class="inputbar-buttons">
+          <button class="inputbar-btn btn-inject" id="btnInject">Inject</button>
+          <button class="inputbar-btn btn-override" id="btnOverride">Override</button>
+          <button class="inputbar-btn btn-speak" id="btnSpeak">Speak</button>
+          <button class="inputbar-btn btn-reload" id="btnReload">Reload</button>
+        </div>
+        <span class="shortcut-hint">Enter = inject &middot; Shift+Enter = override &middot; Ctrl+Enter = speak</span>
+      </div>
+    </section>
+
+  </main>
+
+</div>
+
+<div class="ack-toast" id="ackToast"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ── DOM refs ──
+  var transcript = document.getElementById("transcript");
+  var transcriptEmpty = document.getElementById("transcriptEmpty");
+  var scrollPill = document.getElementById("scrollPill");
+  var connPill = document.getElementById("connPill");
+  var connLabel = document.getElementById("connLabel");
+  var stateBadge = document.getElementById("stateBadge");
+  var stateLabel = document.getElementById("stateLabel");
+  var judgeBadge = document.getElementById("judgeBadge");
+  var judgeLabel = document.getElementById("judgeLabel");
+  var callInfo = document.getElementById("callInfo");
+  var callsList = document.getElementById("callsList");
+  var callsEmpty = document.getElementById("callsEmpty");
+  var callCount = document.getElementById("callCount");
+  var cmdInput = document.getElementById("cmdInput");
+  var btnInject = document.getElementById("btnInject");
+  var btnOverride = document.getElementById("btnOverride");
+  var btnSpeak = document.getElementById("btnSpeak");
+  var btnReload = document.getElementById("btnReload");
+  var filterAll = document.getElementById("filterAll");
+  var filterFlagged = document.getElementById("filterFlagged");
+  var btnLaunch = document.getElementById("btnLaunch");
+  var launchMenu = document.getElementById("launchMenu");
+  var modeToggle = document.getElementById("modeToggle");
+  var btnVerdictHistory = document.getElementById("btnVerdictHistory");
+  var verdictDrawer = document.getElementById("verdictDrawer");
+  var drawerHandle = document.getElementById("drawerHandle");
+  var verdictList = document.getElementById("verdictList");
+  var ackToast = document.getElementById("ackToast");
+
+  // ── State ──
+  var ws = null;
+  var autoScroll = true;
+  var selectedCallId = null;
+  var filterMode = "all";
+  var drawerOpen = false;
+  // calls: Map<callId, {label, status, mode, agentState, transcripts[], verdicts[], guidanceRequests: Map, pendingVerdict, highestRisk}>
+  var calls = new Map();
+
+  function getCall(callId) {
+    if (!calls.has(callId)) {
+      calls.set(callId, {
+        label: callId,
+        status: "active",
+        mode: "llm",
+        agentState: "listening",
+        transcripts: [],
+        verdicts: [],
+        guidanceRequests: new Map(),
+        pendingVerdict: null,
+        highestRisk: "none"
+      });
+    }
+    return calls.get(callId);
+  }
+
+  // ── WebSocket ──
+  function connect() {
+    setConn("connecting");
+    ws = new WebSocket("ws://localhost:8766/ws");
+    ws.onopen = function(){ setConn("connected"); };
+    ws.onclose = function(){ setConn("disconnected"); setTimeout(connect, 2000); };
+    ws.onerror = function(){ setConn("disconnected"); };
+    ws.onmessage = function(e){
+      try { handleMessage(JSON.parse(e.data)); } catch(_){}
+    };
+  }
+
+  function setConn(s) {
+    connPill.className = "conn-pill " + s;
+    var labels = { connecting: "Connecting", connected: "Connected", disconnected: "Disconnected" };
+    connLabel.textContent = labels[s] || s;
+  }
+
+  function send(obj) {
+    if (!ws || ws.readyState !== 1) return;
+    obj.ts = Date.now() / 1000;
+    if (selectedCallId && obj.payload) obj.payload.call_id = selectedCallId;
+    ws.send(JSON.stringify(obj));
+  }
+
+  // ── Dispatch ──
+  function handleMessage(msg) {
+    var p = msg.payload || {};
+    switch(msg.type) {
+      case "call_started": onCallStarted(p); break;
+      case "call_ended": onCallEnded(p); break;
+      case "transcript": onTranscript(p, msg.ts); break;
+      case "verdict": onVerdict(p, msg.ts); break;
+      case "agent_state": onAgentState(p); break;
+      case "guidance_request": onGuidanceRequest(p); break;
+      case "judge_status": onJudgeStatus(p); break;
+      case "context_update": onContextUpdate(p); break;
+      case "ack": onAck(p); break;
+    }
+  }
+
+  // ── Call lifecycle ──
+  function onCallStarted(p) {
+    var c = getCall(p.call_id);
+    c.label = p.label || p.call_id;
+    c.status = "active";
+    if (!selectedCallId) selectCall(p.call_id);
+    renderSidebar();
+  }
+
+  function onCallEnded(p) {
+    var c = calls.get(p.call_id);
+    if (c) { c.status = "ended"; renderSidebar(); }
+  }
+
+  // ── Transcript ──
+  function onTranscript(p, ts) {
+    var cid = p.call_id || "";
+    var c = getCall(cid);
+    c.transcripts.push({ speaker: p.speaker, text: p.text, ts: ts, turnId: p.turn_id });
+    if (cid === selectedCallId) renderTranscriptItem(p, ts, c);
+    renderSidebar();
+  }
+
+  var RISK_ORDER = { none: 0, low: 1, medium: 2, high: 3, critical: 4 };
+
+  function renderTranscriptItem(p, ts, call) {
+    if (transcriptEmpty && transcriptEmpty.parentNode) transcriptEmpty.remove();
+
+    var isAgent = p.speaker === "agent";
+    var isSystem = p.speaker === "system";
+    var isOperator = isSystem && p.text && p.text.indexOf("[OPERATOR]") === 0;
+    var isInject = isSystem && p.text && p.text.indexOf("[INJECT]") === 0;
+    var isOverride = isSystem && p.text && p.text.indexOf("[OVERRIDE]") === 0;
+    var v = isAgent ? call.pendingVerdict : null;
+    if (isAgent) call.pendingVerdict = null;
+
+    var riskLevel = v ? v.risk_level : "none";
+    var flagged = v && (riskLevel === "high" || riskLevel === "critical" || riskLevel === "medium");
+    var blocked = v && v.action === "block";
+
+    if (filterMode === "flagged" && !flagged && !isOperator && !isInject && !isOverride) return;
+
+    var el = document.createElement("div");
+    var cls = "msg";
+    if (isInject) cls += " inject";
+    else if (isOverride) cls += " override";
+    else if (isOperator) cls += " operator";
+    else if (isSystem) cls += " system";
+    else if (isAgent) cls += " agent";
+    else cls += " user";
+
+    if (v && riskLevel !== "none") cls += " risk-" + riskLevel;
+    if (blocked) cls += " blocked";
+    el.className = cls;
+
+    var speakerLabel = isOperator ? "Operator" : isInject ? "Inject" : isOverride ? "Override" : p.speaker;
+    var html = '<div class="msg-meta">';
+    html += '<span class="msg-speaker">' + esc(speakerLabel) + '</span>';
+    html += '<span class="msg-time">' + fmtTime(ts) + '</span>';
+    html += '</div>';
+    var displayText = p.text;
+    if (isOperator) displayText = p.text.replace("[OPERATOR] ", "");
+    else if (isInject) displayText = p.text.replace("[INJECT] ", "");
+    else if (isOverride) displayText = p.text.replace("[OVERRIDE] ", "");
+    html += '<span class="msg-text">' + esc(displayText) + '</span>';
+
+    if (blocked && v.corrective_instruction) {
+      html += '<span class="corrective">' + esc(v.corrective_instruction) + '</span>';
+    }
+
+    // Inline verdict badge for flagged agent messages
+    if (v && riskLevel !== "none" && isAgent) {
+      var vid = "v-" + Date.now() + "-" + Math.random().toString(36).slice(2,6);
+      html += '<div class="verdict-badge risk-' + riskLevel + '" data-vid="' + vid + '">';
+      html += esc(riskLevel) + ' &middot; ' + esc(v.action);
+      html += '</div>';
+      html += '<div class="verdict-detail" id="' + vid + '">';
+      if (v.reasoning) html += '<div class="verdict-reasoning">' + esc(v.reasoning) + '</div>';
+      if (v.corrective_instruction && !blocked) html += '<div style="color:#166534;margin-top:4px">' + esc(v.corrective_instruction) + '</div>';
+      html += '</div>';
+    }
+
+    el.innerHTML = html;
+
+    // Wire verdict badge click
+    var badge = el.querySelector(".verdict-badge");
+    if (badge) {
+      badge.addEventListener("click", function() {
+        var detail = document.getElementById(badge.getAttribute("data-vid"));
+        if (detail) detail.classList.toggle("open");
+      });
+    }
+
+    transcript.appendChild(el);
+
+    if (autoScroll) scrollBottom();
+    else scrollPill.classList.add("visible");
+  }
+
+  // ── Verdict ──
+  function onVerdict(p, ts) {
+    var cid = p.call_id || "";
+    var c = getCall(cid);
+    c.pendingVerdict = p;
+    c.verdicts.unshift({ v: p, ts: ts });
+
+    // Track highest risk for call card dot
+    if ((RISK_ORDER[p.risk_level] || 0) > (RISK_ORDER[c.highestRisk] || 0)) {
+      c.highestRisk = p.risk_level;
+    }
+
+    if (cid === selectedCallId || !selectedCallId) {
+      judgeBadge.setAttribute("data-judge", "idle");
+      judgeLabel.textContent = "Judge idle";
+    }
+    if (c.verdicts.length > 50) c.verdicts.pop();
+    if (cid === selectedCallId && drawerOpen) renderVerdictHistory(c);
+    renderSidebar();
+  }
+
+  function renderVerdictHistory(call) {
+    var html = "";
+    for (var i = 0; i < call.verdicts.length; i++) {
+      var item = call.verdicts[i];
+      html += '<div class="vh-item">';
+      html += '<span class="vh-dot ' + item.v.risk_level + '"></span>';
+      html += '<span class="vh-action">' + esc(item.v.action) + '</span>';
+      html += '<span class="vh-reason">' + esc(trunc(item.v.reasoning, 50)) + '</span>';
+      html += '<span class="vh-time">' + fmtTime(item.ts) + '</span>';
+      html += '</div>';
+    }
+    verdictList.innerHTML = html || '<div style="color:var(--text-muted);padding:16px 0;text-align:center">No verdicts yet</div>';
+  }
+
+  // ── Agent state ──
+  function onAgentState(p) {
+    var cid = p.call_id || "";
+    var c = getCall(cid);
+    c.agentState = p.state || "listening";
+    var prevMode = c.mode;
+    if (p.mode) c.mode = p.mode;
+
+    if (p.state === "waiting") {
+      if (!c._prevWaiting) { c._prevWaiting = true; renderSidebar(); }
+    } else {
+      if (c._prevWaiting) { c._prevWaiting = false; renderSidebar(); }
+    }
+
+    if (p.mode && p.mode !== prevMode) { renderSidebar(); renderModeToggle(); }
+
+    if (cid === selectedCallId) {
+      var displayState = p.mode === "takeover" ? "takeover" : (p.state || "\u2014");
+      stateBadge.setAttribute("data-state", displayState);
+      stateLabel.textContent = displayState.charAt(0).toUpperCase() + displayState.slice(1);
+    }
+  }
+
+  // ── Guidance ──
+  function onGuidanceRequest(p) {
+    var cid = p.call_id || "";
+    var c = getCall(cid);
+    c.guidanceRequests.set(p.request_id, { question: p.question, requestId: p.request_id, resolved: false, response: "" });
+    c._prevWaiting = true;
+    renderSidebar();
+    if (cid === selectedCallId) renderGuidanceCard(p);
+  }
+
+  function renderGuidanceCard(p) {
+    if (transcriptEmpty && transcriptEmpty.parentNode) transcriptEmpty.remove();
+    var el = document.createElement("div");
+    el.className = "guidance-card";
+    el.id = "gc-" + p.request_id;
+
+    var html = '<div class="guidance-header">';
+    html += '<div class="guidance-pulse"></div>';
+    html += '<span class="guidance-label">Guidance Requested</span>';
+    html += '</div>';
+    html += '<div class="guidance-question">' + esc(p.question) + '</div>';
+    html += '<div class="guidance-input-row">';
+    html += '<input class="guidance-input" id="gi-' + esc(p.request_id) + '" placeholder="Type your response..." />';
+    html += '<button class="guidance-send" data-rid="' + esc(p.request_id) + '" data-cid="' + esc(p.call_id) + '">Send</button>';
+    html += '</div>';
+
+    el.innerHTML = html;
+    transcript.appendChild(el);
+
+    var btn = el.querySelector(".guidance-send");
+    var inp = el.querySelector(".guidance-input");
+    btn.addEventListener("click", function(){ submitGuidance(p.call_id, p.request_id, inp, el); });
+    inp.addEventListener("keydown", function(e){
+      if (e.key === "Enter") { e.preventDefault(); submitGuidance(p.call_id, p.request_id, inp, el); }
+    });
+    inp.focus();
+
+    if (autoScroll) scrollBottom();
+    else scrollPill.classList.add("visible");
+  }
+
+  function submitGuidance(callId, requestId, inp, card) {
+    var text = inp.value.trim();
+    if (!text) return;
+
+    send({
+      type: "guidance_response",
+      payload: { request_id: requestId, response: text, call_id: callId }
+    });
+
+    var c = getCall(callId);
+    var gr = c.guidanceRequests.get(requestId);
+    if (gr) { gr.resolved = true; gr.response = text; }
+
+    var anyPending = false;
+    c.guidanceRequests.forEach(function(g){ if (!g.resolved) anyPending = true; });
+    if (!anyPending) { c._prevWaiting = false; renderSidebar(); }
+
+    card.className = "guidance-card resolved";
+    card.innerHTML = '<div class="guidance-header"><span class="guidance-label">Guidance Sent</span></div>'
+      + '<div class="guidance-question">' + esc(c.guidanceRequests.get(requestId).question) + '</div>'
+      + '<div class="guidance-sent">Response: ' + esc(text) + '</div>';
+  }
+
+  // ── Judge status ──
+  function onJudgeStatus(p) {
+    var cid = p.call_id || "";
+    if (cid === selectedCallId || !selectedCallId) {
+      var s = p.status || "idle";
+      judgeBadge.setAttribute("data-judge", s);
+      var labels = { evaluating: "Evaluating...", rule_caught: "Rule caught", idle: "Judge idle" };
+      judgeLabel.textContent = labels[s] || s;
+    }
+  }
+
+  // ── Context update ──
+  function onContextUpdate(p) {
+    var cid = p.call_id || "";
+    var c = calls.get(cid);
+    if (c && p.mode) c.mode = p.mode;
+    if (cid === selectedCallId) { renderSidebar(); renderModeToggle(); }
+  }
+
+  // ── Ack ──
+  var ACK_LABELS = {
+    inject_instruction: "Instruction injected",
+    interrupt_and_replace: "Override sent",
+    operator_speak: "Speaking to caller",
+    reload_policy: "Policy reloaded",
+    set_mode: "Mode updated",
+    guidance_response: "Guidance sent",
+    launch_call: "Call launched"
+  };
+  var ACK_TYPES = {
+    inject_instruction: "inject",
+    interrupt_and_replace: "override",
+    operator_speak: "speak",
+    reload_policy: "reload"
+  };
+  function onAck(p) {
+    var cmd = p.command || "";
+    var label = ACK_LABELS[cmd] || cmd;
+    ackToast.textContent = (p.ok ? label : "Failed \u2014 " + label);
+    var cls = "ack-toast visible ";
+    if (!p.ok) { cls += "fail"; }
+    else if (ACK_TYPES[cmd]) { cls += "ok-" + ACK_TYPES[cmd]; }
+    else { cls += "ok"; }
+    ackToast.className = cls;
+    clearTimeout(ackToast._timer);
+    ackToast._timer = setTimeout(function(){ ackToast.classList.remove("visible"); }, 2000);
+  }
+
+  // ── Select call ──
+  function selectCall(callId) {
+    selectedCallId = callId;
+    renderSidebar();
+    renderFullTranscript();
+    renderModeToggle();
+
+    var c = calls.get(callId);
+    if (c) {
+      callInfo.textContent = c.label;
+      stateBadge.setAttribute("data-state", c.agentState);
+      stateLabel.textContent = (c.agentState || "\u2014").charAt(0).toUpperCase() + (c.agentState || "").slice(1);
+    }
+
+    if (drawerOpen) {
+      renderVerdictHistory(c || { verdicts: [] });
+    }
+  }
+
+  // ── Mode toggle ──
+  function renderModeToggle() {
+    var c = selectedCallId ? calls.get(selectedCallId) : null;
+    var mode = c ? c.mode : "llm";
+    var btns = modeToggle.querySelectorAll(".mode-btn");
+    btns.forEach(function(btn) {
+      var m = btn.getAttribute("data-mode");
+      btn.className = "mode-btn" + (m === mode ? " active-" + m : "");
+    });
+  }
+
+  modeToggle.addEventListener("click", function(e) {
+    var btn = e.target.closest(".mode-btn");
+    if (!btn || !selectedCallId) return;
+    var newMode = btn.getAttribute("data-mode");
+    var c = calls.get(selectedCallId);
+    if (c && newMode !== c.mode) {
+      c.mode = newMode;
+      send({ type: "set_mode", payload: { mode: newMode, call_id: selectedCallId } });
+      renderModeToggle();
+      renderSidebar();
+    }
+  });
+
+  // ── Sidebar rendering ──
+  function renderSidebar() {
+    var html = "";
+    var count = 0;
+    calls.forEach(function(c, cid) {
+      count++;
+      var sel = cid === selectedCallId;
+      var waiting = c._prevWaiting && c.status !== "ended";
+      var cls = "call-card";
+      if (sel) cls += " selected";
+      if (c.status === "ended") cls += " ended";
+      if (waiting) cls += " waiting";
+
+      var lastText = "";
+      if (c.transcripts.length > 0) {
+        lastText = trunc(c.transcripts[c.transcripts.length - 1].text, 40);
+      }
+
+      html += '<div class="' + cls + '" data-cid="' + esc(cid) + '">';
+      html += '<div class="call-dot-wrap"><div class="call-dot"></div></div>';
+      html += '<div class="call-body">';
+      html += '<div class="call-label">' + esc(c.label) + '</div>';
+      html += '<div class="call-meta">';
+      html += '<span class="call-mode-badge ' + c.mode + '">' + esc(c.mode) + '</span>';
+      html += '</div>';
+      if (lastText) html += '<div class="call-snippet">' + esc(lastText) + '</div>';
+      html += '</div>';
+
+      // Risk indicator dot
+      if (c.highestRisk && c.highestRisk !== "none" && c.highestRisk !== "low") {
+        html += '<div class="call-risk"><div class="call-risk-dot ' + c.highestRisk + '"></div></div>';
+      }
+
+      html += '</div>';
+    });
+
+    callsList.innerHTML = html || '<div class="calls-empty">No active calls</div>';
+    callCount.textContent = count > 0 ? count : "";
+
+    // Wire clicks
+    callsList.querySelectorAll(".call-card").forEach(function(el){
+      el.addEventListener("click", function(){
+        selectCall(el.getAttribute("data-cid"));
+      });
+    });
+  }
+
+  // ── Full re-renders ──
+  function renderFullTranscript() {
+    transcript.innerHTML = "";
+    var c = calls.get(selectedCallId);
+    if (!c || c.transcripts.length === 0) {
+      transcript.innerHTML = '<div class="transcript-empty">Waiting for data...</div>';
+      return;
+    }
+
+    for (var i = 0; i < c.transcripts.length; i++) {
+      var t = c.transcripts[i];
+      renderTranscriptItem({ speaker: t.speaker, text: t.text, turn_id: t.turnId }, t.ts, c);
+    }
+
+    c.guidanceRequests.forEach(function(gr){
+      if (gr.resolved) {
+        var el = document.createElement("div");
+        el.className = "guidance-card resolved";
+        el.innerHTML = '<div class="guidance-header"><span class="guidance-label">Guidance Sent</span></div>'
+          + '<div class="guidance-question">' + esc(gr.question) + '</div>'
+          + '<div class="guidance-sent">Response: ' + esc(gr.response) + '</div>';
+        transcript.appendChild(el);
+      } else {
+        renderGuidanceCard({ call_id: selectedCallId, question: gr.question, request_id: gr.requestId });
+      }
+    });
+
+    scrollBottom();
+  }
+
+  // ── Launch dropdown ──
+  btnLaunch.addEventListener("click", function(e) {
+    e.stopPropagation();
+    launchMenu.classList.toggle("open");
+  });
+
+  document.addEventListener("click", function(e) {
+    if (!launchMenu.contains(e.target) && e.target !== btnLaunch) {
+      launchMenu.classList.remove("open");
+    }
+  });
+
+  launchMenu.querySelectorAll(".launch-option").forEach(function(opt) {
+    opt.addEventListener("click", function() {
+      var domain = opt.getAttribute("data-domain");
+      launchMenu.classList.remove("open");
+      btnLaunch.disabled = true;
+      send({ type: "launch_call", payload: { domain: domain } });
+      setTimeout(function(){ btnLaunch.disabled = false; }, 3000);
+    });
+  });
+
+  // ── Verdict drawer ──
+  btnVerdictHistory.addEventListener("click", function() {
+    drawerOpen = !drawerOpen;
+    verdictDrawer.classList.toggle("open", drawerOpen);
+    btnVerdictHistory.classList.toggle("active", drawerOpen);
+    if (drawerOpen) {
+      var c = selectedCallId ? calls.get(selectedCallId) : null;
+      renderVerdictHistory(c || { verdicts: [] });
+    }
+  });
+
+  drawerHandle.addEventListener("click", function() {
+    drawerOpen = false;
+    verdictDrawer.classList.remove("open");
+    btnVerdictHistory.classList.remove("active");
+  });
+
+  // ── Input commands ──
+  function getInput() {
+    var v = cmdInput.value.trim();
+    if (!v) return null;
+    cmdInput.value = "";
+    return v;
+  }
+
+  function flashBtn(btn) {
+    btn.classList.add("sent");
+    setTimeout(function(){ btn.classList.remove("sent"); }, 300);
+    var bar = cmdInput.closest(".inputbar");
+    if (bar) { bar.classList.remove("flash"); void bar.offsetWidth; bar.classList.add("flash"); }
+  }
+
+  btnInject.addEventListener("click", function(){
+    var t = getInput(); if (t) { flashBtn(btnInject); send({ type: "inject_instruction", payload: { instruction: t } }); }
+  });
+  btnOverride.addEventListener("click", function(){
+    var t = getInput(); if (t) { flashBtn(btnOverride); send({ type: "interrupt_and_replace", payload: { instruction: t } }); }
+  });
+  btnSpeak.addEventListener("click", function(){
+    var t = getInput(); if (t) { flashBtn(btnSpeak); send({ type: "operator_speak", payload: { text: t } }); }
+  });
+  btnReload.addEventListener("click", function(){
+    flashBtn(btnReload); send({ type: "reload_policy", payload: {} });
+  });
+  cmdInput.addEventListener("keydown", function(e){
+    if (e.key === "Enter" && e.ctrlKey) {
+      e.preventDefault();
+      var t = getInput(); if (t) { flashBtn(btnSpeak); send({ type: "operator_speak", payload: { text: t } }); }
+    } else if (e.key === "Enter" && e.shiftKey) {
+      e.preventDefault();
+      var t = getInput(); if (t) { flashBtn(btnOverride); send({ type: "interrupt_and_replace", payload: { instruction: t } }); }
+    } else if (e.key === "Enter" && !e.shiftKey && !e.ctrlKey) {
+      e.preventDefault();
+      var t = getInput(); if (t) { flashBtn(btnInject); send({ type: "inject_instruction", payload: { instruction: t } }); }
+    }
+  });
+
+  // ── Filters ──
+  filterAll.addEventListener("click", function(){
+    filterMode = "all";
+    filterAll.className = "filter-tab active";
+    filterFlagged.className = "filter-tab";
+    renderFullTranscript();
+  });
+  filterFlagged.addEventListener("click", function(){
+    filterMode = "flagged";
+    filterFlagged.className = "filter-tab active-flagged";
+    filterAll.className = "filter-tab";
+    renderFullTranscript();
+  });
+
+  // ── Scroll ──
+  transcript.addEventListener("scroll", function(){
+    var gap = transcript.scrollHeight - transcript.scrollTop - transcript.clientHeight;
+    autoScroll = gap < 50;
+    if (autoScroll) scrollPill.classList.remove("visible");
+  });
+  scrollPill.addEventListener("click", function(){
+    scrollBottom(); autoScroll = true; scrollPill.classList.remove("visible");
+  });
+  function scrollBottom() { transcript.scrollTop = transcript.scrollHeight; }
+
+  // ── Util ──
+  function esc(s) {
+    if (!s) return "";
+    return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+  }
+  function fmtTime(ts) {
+    if (!ts) return "";
+    var d = new Date(ts * 1000);
+    return d.toLocaleTimeString([], {hour:"2-digit",minute:"2-digit",second:"2-digit"});
+  }
+  function trunc(s, n) { return s && s.length > n ? s.slice(0, n) + "\u2026" : (s || ""); }
+
+  // ── Init ──
+  connect();
+})();
+</script>
+
+</body>
+</html>
