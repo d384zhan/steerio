@@ -1,0 +1,30 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "steerio"
+version = "0.1.0"
+description = "Real-time voice agent steering SDK for LiveKit"
+requires-python = ">=3.10"
+dependencies = [
+    "livekit-agents>=1.0.0",
+    "websockets>=13.0",
+]
+
+[project.optional-dependencies]
+demo = [
+    "livekit",
+    "livekit-plugins-openai",
+    "livekit-plugins-elevenlabs",
+    "livekit-api",
+    "openai>=1.0.0",
+    "python-dotenv",
+    "supabase>=2.0.0",
+]
+supabase = [
+    "supabase>=2.0.0",
+]
+dev = [
+    "pyright",
+]

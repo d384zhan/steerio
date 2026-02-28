@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual environment
+.venv/
+
+# Environment secrets
+.env
+
+# Runtime artifacts
+recordings/
+audit/
+*.jsonl
+
+# Claude Code / MCP (contain local tokens)
+.claude/
+.mcp.json
+
+# Internal docs
+SETUP.md
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
