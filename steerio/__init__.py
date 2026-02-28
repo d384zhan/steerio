@@ -18,7 +18,7 @@ from .core import (
 )
 
 # Policies — base classes for building safety policies
-from .policies import EscalationConfig, Policy, PolicyRule
+from .policies import EscalationConfig, Policy
 
 # Store — Supabase-backed policy store (optional dependency)
 try:
@@ -54,7 +54,6 @@ __all__ = [
     # Policies (base classes only — domain policies live in demo/)
     "EscalationConfig",
     "Policy",
-    "PolicyRule",
     # Compliance & Evaluation
     "AuditLogger",
     "ComplianceReport",

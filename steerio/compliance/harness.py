@@ -1,16 +1,10 @@
 """Evaluation harness — test safety policies against known scenarios.
 
-Run test cases through a policy's quick_check rules and optionally through
-the LLM judge, then report accuracy metrics. This is how you validate
-that your safety policies actually work before deploying to production.
+Run test cases through the LLM judge and report accuracy metrics. This is how
+you validate that your safety policies actually work before deploying to production.
 
 Usage:
-    from steerio.compliance import EvaluationHarness, TestSuite
-    from steerio.policies import Policy
-
-    harness = EvaluationHarness()
-    report = harness.run_rules(my_policy, my_suite)
-    report.print_summary()
+    from steerio.compliance import EvaluationHarness, EvalReport
 """
 
 from __future__ import annotations
@@ -18,8 +12,6 @@ from __future__ import annotations
 import time
 from dataclasses import dataclass, field
 
-from ..policies.base import Policy
-from ..protocol import RiskLevel
 from .scenarios import TestCase, TestSuite
 
 
@@ -28,17 +20,16 @@ class EvalResult:
     """Result of evaluating a single test case."""
 
     test_case: TestCase
-    caught: bool  # Did the policy catch it (for unsafe) / pass it (for safe)?
-    correct: bool  # Did the policy make the right call?
-    verdict_risk: str = ""  # Risk level from the verdict, if caught
-    verdict_action: str = ""  # Action from the verdict, if caught
+    caught: bool
+    correct: bool
+    verdict_risk: str = ""
+    verdict_action: str = ""
     latency_ms: float = 0.0
-    rule_name: str = ""  # Which rule fired, if any
 
 
 @dataclass
 class EvalReport:
-    """Aggregate results from running a test suite against a policy."""
+    """Aggregate results from running a test suite."""
 
     policy_name: str
     suite_name: str
@@ -59,22 +50,18 @@ class EvalReport:
 
     @property
     def true_positives(self) -> int:
-        """Unsafe correctly caught."""
         return sum(1 for r in self.results if not r.test_case.expected_safe and r.caught)
 
     @property
     def false_negatives(self) -> int:
-        """Unsafe missed (most dangerous failure mode)."""
         return sum(1 for r in self.results if not r.test_case.expected_safe and not r.caught)
 
     @property
     def true_negatives(self) -> int:
-        """Safe correctly passed."""
         return sum(1 for r in self.results if r.test_case.expected_safe and not r.caught)
 
     @property
     def false_positives(self) -> int:
-        """Safe incorrectly flagged."""
         return sum(1 for r in self.results if r.test_case.expected_safe and r.caught)
 
     @property
@@ -104,7 +91,7 @@ class EvalReport:
         print(f"  Recall:          {self.recall:.1%}")
         print(f"  F1 Score:        {self.f1:.1%}")
         print(f"  True Positives:  {self.true_positives}")
-        print(f"  False Negatives: {self.false_negatives}  ← DANGEROUS (missed unsafe)")
+        print(f"  False Negatives: {self.false_negatives}  <- DANGEROUS (missed unsafe)")
         print(f"  True Negatives:  {self.true_negatives}")
         print(f"  False Positives: {self.false_positives}")
 
@@ -121,7 +108,6 @@ class EvalReport:
                 if r.test_case.expected_safe and r.caught:
                     print(f"    - [{r.test_case.category}] {r.test_case.description}")
                     print(f"      Input: \"{r.test_case.input[:80]}...\"")
-                    print(f"      Rule:  {r.rule_name}")
 
         print(f"{'='*60}\n")
 
@@ -142,34 +128,5 @@ class EvalReport:
 
 
 class EvaluationHarness:
-    """Runs test suites against policies and produces eval reports."""
-
-    def run_rules(self, policy: Policy, suite: TestSuite) -> EvalReport:
-        """Run only rule-based checks (fast, no LLM needed).
-
-        This validates your regex/keyword rules against known test cases.
-        Use this in CI/CD to catch policy regressions.
-        """
-        report = EvalReport(policy_name=policy.name, suite_name=suite.name)
-
-        for case in suite.cases:
-            start = time.monotonic()
-            verdict = policy.quick_check(case.input)
-            elapsed = (time.monotonic() - start) * 1000
-
-            caught = verdict is not None
-            # Correct if: unsafe input caught, OR safe input passed
-            correct = (not case.expected_safe and caught) or (case.expected_safe and not caught)
-
-            result = EvalResult(
-                test_case=case,
-                caught=caught,
-                correct=correct,
-                verdict_risk=verdict.risk_level.value if verdict else "",
-                verdict_action=verdict.action.value if verdict else "",
-                latency_ms=elapsed,
-                rule_name=verdict.reasoning.split("[")[1].split("]")[0] if verdict else "",
-            )
-            report.results.append(result)
-
-        return report
+    """Runs test suites and produces eval reports."""
+    pass

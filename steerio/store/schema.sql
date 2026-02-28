@@ -23,19 +23,4 @@ create table if not exists policies (
   created_at  timestamptz not null default now()
 );
 
-create table if not exists policy_rules (
-  id          uuid primary key default gen_random_uuid(),
-  policy_id   uuid not null references policies(id) on delete cascade,
-  name        text not null,
-  description text not null default '',
-  pattern     text not null,
-  risk_level  text not null default 'medium',
-  action      text not null default 'modify',
-  corrective_template text not null default '',
-  priority    int not null default 0,
-  enabled     boolean not null default true,
-  created_at  timestamptz not null default now()
-);
-
-create index if not exists idx_policy_rules_policy on policy_rules(policy_id);
 create index if not exists idx_policies_domain on policies(domain);

@@ -1,1 +1,1 @@
-from .base import EscalationConfig, Policy, PolicyRule
+from .base import EscalationConfig, Policy

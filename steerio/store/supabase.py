@@ -5,8 +5,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from ..policies.base import EscalationConfig, Policy, PolicyRule
-from ..protocol import Action, RiskLevel
+from ..policies.base import EscalationConfig, Policy
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +35,6 @@ class SupabaseStore:
             .execute()
         ).data
 
-        rules = self._load_rules(policy_id)
         judge = row.get("judges") or {}
         judge_prompt = self._build_effective_prompt(
             judge.get("system_prompt", ""),
@@ -50,7 +48,6 @@ class SupabaseStore:
             name=row["name"],
             domain=row["domain"],
             description=row.get("description", ""),
-            rules=rules,
             judge_prompt=judge_prompt,
             version=row.get("version", "1.0"),
             escalation=escalation,
@@ -94,30 +91,6 @@ class SupabaseStore:
             }
         result = self._client.table("policies").insert(row).execute()
         return result.data[0]["id"]
-
-    def _load_rules(self, policy_id: str) -> list[PolicyRule]:
-        rows = (
-            self._client.table("policy_rules")
-            .select("*")
-            .eq("policy_id", policy_id)
-            .eq("enabled", True)
-            .order("priority")
-            .execute()
-        ).data
-
-        rules = []
-        for r in rows:
-            rules.append(
-                PolicyRule(
-                    name=r["name"],
-                    description=r.get("description", ""),
-                    pattern=r["pattern"],
-                    risk_level=RiskLevel(r.get("risk_level", "medium")),
-                    action=Action(r.get("action", "modify")),
-                    corrective_template=r.get("corrective_template", ""),
-                )
-            )
-        return rules
 
     @staticmethod
     def _build_effective_prompt(system_prompt: str, knowledge_base: str) -> str:

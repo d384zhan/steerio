@@ -45,7 +45,7 @@ class SteeredAgent(Agent):
         dashboard: Any | None = None,
         eval_threshold_chars: int = 100,
         call_id: str = "",
-        guidance_hold_message: str = "That's a great question. Let me check on that for you, one moment.",
+        guidance_hold_message: str = "Please wait while I get that information for you.",
         guidance_timeout: float = 60.0,
         recording_path: str = "",
         audit_path: str = "",
@@ -214,23 +214,22 @@ class SteeredAgent(Agent):
         if self._recorder:
             self._recorder.record_transcript(agent_event)
 
+        # DECISION: Judge evaluation runs async (fire-and-forget) so the agent
+        # returns to "listening" immediately. This makes the conversation feel
+        # natural — no pause between agent response and next caller turn.
         if self._mode == "llm":
-            # Two-pass evaluation: fast rules then LLM judge
-            verdict = None
-            if self._policy:
-                verdict = self._policy.quick_check(accumulated_text)
-                if verdict:
-                    logger.info("Policy rule caught: %s", verdict.reasoning)
-                    await self._broadcast_judge_status("rule_caught")
+            asyncio.create_task(self._evaluate_in_background(accumulated_text, turn_id))
 
-            if not verdict:
-                await self._broadcast_judge_status("evaluating")
-                judge_start = time.monotonic()
-                verdict = await self._evaluator.finalize()
-                judge_latency = time.monotonic() - judge_start
-                self._metrics.record_verdict(self._call_id, verdict, latency=judge_latency)
-            else:
-                self._metrics.record_verdict(self._call_id, verdict, latency=0.0)
+        await self._broadcast_state("listening")
+
+    async def _evaluate_in_background(self, accumulated_text: str, turn_id: str) -> None:
+        """Run judge evaluation without blocking the conversation."""
+        try:
+            await self._broadcast_judge_status("evaluating")
+            judge_start = time.monotonic()
+            verdict = await self._evaluator.finalize()
+            judge_latency = time.monotonic() - judge_start
+            self._metrics.record_verdict(self._call_id, verdict, latency=judge_latency)
 
             ctx = self._ctx_mgr.get(self._call_id)
             if ctx:
@@ -251,8 +250,8 @@ class SteeredAgent(Agent):
                 )
 
             await self._apply_verdict(verdict, accumulated_text, turn_id)
-
-        await self._broadcast_state("listening")
+        except Exception:
+            logger.exception("Background judge evaluation failed for turn %s", turn_id)
 
     @function_tool
     async def request_guidance(self, context: RunContext, question: str) -> str:

@@ -253,6 +253,15 @@ class Dashboard:
         msg = WsMessage(type=WsMsgType.CONTEXT_UPDATE, payload=payload)
         await self._broadcast_raw(msg.to_json())
 
+    async def broadcast_call_status(self, call_id: str, status: str, phone_number: str = "", error: str = "") -> None:
+        payload = {"call_id": call_id, "status": status}
+        if phone_number:
+            payload["phone_number"] = phone_number
+        if error:
+            payload["error"] = error
+        msg = WsMessage(type=WsMsgType.CALL_STATUS, payload=payload)
+        await self._broadcast_raw(msg.to_json())
+
     async def broadcast_call_ended(self, call_id: str) -> None:
         msg = WsMessage(type=WsMsgType.CALL_ENDED, payload={"call_id": call_id})
         await self._broadcast_raw(msg.to_json())

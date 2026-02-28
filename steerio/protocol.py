@@ -77,6 +77,10 @@ class WsMsgType(str, Enum):
     UPDATE_JUDGE_PROMPT = "update_judge_prompt"
     RELOAD_POLICY = "reload_policy"
     OPERATOR_SPEAK = "operator_speak"
+    # SIP dialing (client↔server)
+    DIAL_CALL = "dial_call"
+    HANG_UP = "hang_up"
+    CALL_STATUS = "call_status"
 
 
 @dataclass

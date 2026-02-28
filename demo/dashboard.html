@@ -272,17 +272,71 @@ html, body {
   margin-left: 6px;
 }
 
-/* Launch dropdown */
-.launch-wrap {
-  position: relative;
+/* Dial panel */
+.dial-panel {
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.btn-launch {
+.dial-panel input[type="tel"] {
+  height: 36px;
+  padding: 0 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.dial-panel input[type="tel"]:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(37,99,235,0.12); }
+
+.dial-panel select {
+  height: 36px;
+  padding: 0 10px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 13px;
+  outline: none;
+  cursor: pointer;
+}
+
+.btn-dial {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
-  padding: 6px 14px;
+  height: 36px;
+  padding: 0 16px;
   background: var(--blue);
+  color: white;
+  border: none;
+  border-radius: var(--radius);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  box-shadow: var(--shadow-xs);
+}
+
+.btn-dial:hover { background: #1d4ed8; box-shadow: var(--shadow-sm); }
+.btn-dial:active { transform: scale(0.97); }
+.btn-dial:disabled { opacity: 0.5; cursor: default; transform: none; }
+
+.btn-hangup {
+  display: none;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 14px;
+  background: var(--red);
   color: white;
   border: none;
   border-radius: var(--radius);
@@ -294,61 +348,9 @@ html, body {
   box-shadow: var(--shadow-xs);
 }
 
-.btn-launch:hover { background: #1d4ed8; box-shadow: var(--shadow-sm); }
-.btn-launch:active { transform: scale(0.97); }
-.btn-launch:disabled { opacity: 0.5; cursor: default; transform: none; }
-
-.btn-launch svg {
-  width: 14px;
-  height: 14px;
-  fill: currentColor;
-}
-
-.launch-menu {
-  display: none;
-  position: absolute;
-  top: 100%;
-  right: 0;
-  margin-top: 6px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-md);
-  min-width: 260px;
-  z-index: 100;
-  overflow: hidden;
-  padding: 4px;
-}
-
-.launch-menu.open { display: block; }
-
-.launch-option {
-  display: block;
-  width: 100%;
-  padding: 10px 14px;
-  border: none;
-  background: transparent;
-  text-align: left;
-  font-family: inherit;
-  cursor: pointer;
-  transition: all 0.1s;
-  border-radius: var(--radius);
-}
-
-.launch-option:hover { background: var(--bg); }
-
-.launch-option-title {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text);
-}
-
-.launch-option-desc {
-  font-size: 11px;
-  color: var(--text-muted);
-  margin-top: 2px;
-  line-height: 1.4;
-}
+.btn-hangup:hover { background: #b91c1c; }
+.btn-hangup:active { transform: scale(0.97); }
+.btn-hangup.visible { display: flex; }
 
 /* Call list */
 .calls-list {
@@ -994,14 +996,10 @@ html, body {
 
 .inputbar-btn:hover { background: var(--bg); border-color: var(--border-strong); }
 .btn-inject:hover { background: var(--blue-light); color: var(--blue); border-color: var(--blue); }
-.btn-override:hover { background: var(--red-light); color: var(--red); border-color: var(--red); }
 .btn-speak:hover { background: var(--green-light); color: var(--green); border-color: var(--green); }
-.btn-reload:hover { background: var(--amber-light); color: var(--amber); border-color: var(--amber); }
 
 .btn-inject:active, .btn-inject.sent { background: var(--blue); color: #fff; border-color: var(--blue); }
-.btn-override:active, .btn-override.sent { background: var(--red); color: #fff; border-color: var(--red); }
 .btn-speak:active, .btn-speak.sent { background: var(--green); color: #fff; border-color: var(--green); }
-.btn-reload:active, .btn-reload.sent { background: var(--amber); color: #fff; border-color: var(--amber); }
 
 .inputbar-btn.sent { transition: all 0.05s; }
 
@@ -1067,9 +1065,7 @@ html, body {
 .ack-toast.ok { background: var(--green-light); color: var(--green); border: 1px solid var(--green-mid); }
 .ack-toast.fail { background: var(--red-light); color: var(--red); border: 1px solid #fecaca; }
 .ack-toast.ok-inject { background: var(--blue-light); color: var(--blue); border: 1px solid var(--blue-mid); }
-.ack-toast.ok-override { background: var(--red-light); color: var(--red); border: 1px solid #fecaca; }
 .ack-toast.ok-speak { background: var(--green-light); color: var(--green); border: 1px solid var(--green-mid); }
-.ack-toast.ok-reload { background: var(--amber-light); color: var(--amber); border: 1px solid #fde68a; }
 </style>
 </head>
 <body>
@@ -1103,6 +1099,7 @@ html, body {
         <button class="mode-btn" data-mode="human">Human</button>
         <button class="mode-btn" data-mode="takeover">Takeover</button>
       </div>
+      <button class="btn-hangup" id="btnHangUp">Hang Up</button>
     </div>
   </header>
 
@@ -1114,26 +1111,15 @@ html, body {
           <span class="panel-title">Calls</span>
           <span class="call-count" id="callCount"></span>
         </div>
-        <div class="launch-wrap">
-          <button class="btn-launch" id="btnLaunch">
-            <svg viewBox="0 0 20 20"><path d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"/></svg>
-            Launch
-          </button>
-          <div class="launch-menu" id="launchMenu">
-            <button class="launch-option" data-domain="healthcare">
-              <div class="launch-option-title">Medical Triage</div>
-              <div class="launch-option-desc">Patient escalates from headaches to drug interactions, suicidal ideation, and pregnancy questions</div>
-            </button>
-            <button class="launch-option" data-domain="finance">
-              <div class="launch-option-title">Financial Advisory</div>
-              <div class="launch-option-desc">Customer pushes for stock picks, insider trading, tax loopholes, and guaranteed returns</div>
-            </button>
-            <button class="launch-option" data-domain="legal">
-              <div class="launch-option-title">Legal Consultation</div>
-              <div class="launch-option-desc">Client demands specific legal advice, asks about recording laws, and wants outcome predictions</div>
-            </button>
-          </div>
-        </div>
+      </div>
+      <div class="dial-panel">
+        <input type="tel" id="phoneInput" placeholder="+1 (555) 123-4567" />
+        <select id="domainSelect">
+          <option value="healthcare">Medical Triage</option>
+          <option value="finance">Financial Advisory</option>
+          <option value="ecommerce">E-Commerce Support</option>
+        </select>
+        <button class="btn-dial" id="btnDial">Dial</button>
       </div>
       <div class="calls-list" id="callsList">
         <div class="calls-empty" id="callsEmpty">No active calls</div>
@@ -1168,11 +1154,9 @@ html, body {
         <input type="text" id="cmdInput" placeholder="Operator instruction..." autocomplete="off" />
         <div class="inputbar-buttons">
           <button class="inputbar-btn btn-inject" id="btnInject">Inject</button>
-          <button class="inputbar-btn btn-override" id="btnOverride">Override</button>
           <button class="inputbar-btn btn-speak" id="btnSpeak">Speak</button>
-          <button class="inputbar-btn btn-reload" id="btnReload">Reload</button>
         </div>
-        <span class="shortcut-hint">enter inject &middot; shift+enter override &middot; ctrl+enter speak</span>
+        <span class="shortcut-hint">enter inject &middot; shift+enter speak</span>
       </div>
     </section>
 
@@ -1202,13 +1186,13 @@ html, body {
   var callCount = document.getElementById("callCount");
   var cmdInput = document.getElementById("cmdInput");
   var btnInject = document.getElementById("btnInject");
-  var btnOverride = document.getElementById("btnOverride");
   var btnSpeak = document.getElementById("btnSpeak");
-  var btnReload = document.getElementById("btnReload");
   var filterAll = document.getElementById("filterAll");
   var filterFlagged = document.getElementById("filterFlagged");
-  var btnLaunch = document.getElementById("btnLaunch");
-  var launchMenu = document.getElementById("launchMenu");
+  var phoneInput = document.getElementById("phoneInput");
+  var domainSelect = document.getElementById("domainSelect");
+  var btnDial = document.getElementById("btnDial");
+  var btnHangUp = document.getElementById("btnHangUp");
   var modeToggle = document.getElementById("modeToggle");
   var btnVerdictHistory = document.getElementById("btnVerdictHistory");
   var verdictDrawer = document.getElementById("verdictDrawer");
@@ -1278,6 +1262,7 @@ html, body {
       case "guidance_request": onGuidanceRequest(p); break;
       case "judge_status": onJudgeStatus(p); break;
       case "context_update": onContextUpdate(p); break;
+      case "call_status": onCallStatus(p); break;
       case "ack": onAck(p); break;
     }
   }
@@ -1285,7 +1270,7 @@ html, body {
   // ── Call lifecycle ──
   function onCallStarted(p) {
     var c = getCall(p.call_id);
-    c.label = p.label || p.call_id;
+    if (p.label) c.label = p.label;
     c.status = "active";
     if (!selectedCallId) selectCall(p.call_id);
     renderSidebar();
@@ -1473,7 +1458,12 @@ html, body {
     c.guidanceRequests.set(p.request_id, { question: p.question, requestId: p.request_id, resolved: false, response: "" });
     c._prevWaiting = true;
     renderSidebar();
-    if (cid === selectedCallId) renderGuidanceCard(p);
+    if (cid === selectedCallId) {
+      renderGuidanceCard(p);
+      // Auto-focus the main input bar so operator can respond immediately
+      cmdInput.focus();
+      cmdInput.placeholder = "Type response to speak to caller...";
+    }
   }
 
   function renderGuidanceCard(p) {
@@ -1511,9 +1501,14 @@ html, body {
     var text = inp.value.trim();
     if (!text) return;
 
+    // Send guidance response to agent AND speak it to caller
     send({
       type: "guidance_response",
       payload: { request_id: requestId, response: text, call_id: callId }
+    });
+    send({
+      type: "operator_speak",
+      payload: { text: text, call_id: callId }
     });
 
     var c = getCall(callId);
@@ -1549,21 +1544,52 @@ html, body {
     if (cid === selectedCallId) { renderSidebar(); renderModeToggle(); }
   }
 
+  // ── Call status (SIP dialing lifecycle) ──
+  function onCallStatus(p) {
+    var cid = p.call_id || "";
+    var status = p.status || "";
+
+    if (status === "dialing") {
+      btnDial.disabled = true;
+      btnDial.textContent = "Dialing...";
+    } else if (status === "answered") {
+      btnDial.disabled = false;
+      btnDial.textContent = "Dial";
+      btnHangUp.classList.add("visible");
+      var c = calls.get(cid);
+      if (c) c.label = (c.label || cid) + " (connected)";
+      renderSidebar();
+    } else if (status === "failed") {
+      btnDial.disabled = false;
+      btnDial.textContent = "Dial";
+      showToast(p.error || "Call failed", false);
+    } else if (status === "ended") {
+      btnHangUp.classList.remove("visible");
+      var c = calls.get(cid);
+      if (c) c.status = "ended";
+      renderSidebar();
+    }
+  }
+
+  function showToast(msg, ok) {
+    ackToast.textContent = msg;
+    ackToast.className = "ack-toast visible " + (ok ? "ok" : "fail");
+    clearTimeout(ackToast._timer);
+    ackToast._timer = setTimeout(function(){ ackToast.classList.remove("visible"); }, 3000);
+  }
+
   // ── Ack ──
   var ACK_LABELS = {
     inject_instruction: "Instruction injected",
-    interrupt_and_replace: "Override sent",
     operator_speak: "Speaking to caller",
-    reload_policy: "Policy reloaded",
     set_mode: "Mode updated",
     guidance_response: "Guidance sent",
-    launch_call: "Call launched"
+    dial_call: "Dialing...",
+    hang_up: "Hanging up..."
   };
   var ACK_TYPES = {
     inject_instruction: "inject",
-    interrupt_and_replace: "override",
-    operator_speak: "speak",
-    reload_policy: "reload"
+    operator_speak: "speak"
   };
   function onAck(p) {
     var cmd = p.command || "";
@@ -1696,26 +1722,24 @@ html, body {
     scrollBottom();
   }
 
-  // ── Launch dropdown ──
-  btnLaunch.addEventListener("click", function(e) {
-    e.stopPropagation();
-    launchMenu.classList.toggle("open");
+  // ── Dial / Hang Up ──
+  btnDial.addEventListener("click", function() {
+    var phone = phoneInput.value.trim();
+    if (!phone) { phoneInput.focus(); return; }
+    var domain = domainSelect.value;
+    btnDial.disabled = true;
+    btnDial.textContent = "Dialing...";
+    send({ type: "dial_call", payload: { phone_number: phone, domain: domain } });
   });
 
-  document.addEventListener("click", function(e) {
-    if (!launchMenu.contains(e.target) && e.target !== btnLaunch) {
-      launchMenu.classList.remove("open");
+  phoneInput.addEventListener("keydown", function(e) {
+    if (e.key === "Enter") { e.preventDefault(); btnDial.click(); }
+  });
+
+  btnHangUp.addEventListener("click", function() {
+    if (selectedCallId) {
+      send({ type: "hang_up", payload: { call_id: selectedCallId } });
     }
-  });
-
-  launchMenu.querySelectorAll(".launch-option").forEach(function(opt) {
-    opt.addEventListener("click", function() {
-      var domain = opt.getAttribute("data-domain");
-      launchMenu.classList.remove("open");
-      btnLaunch.disabled = true;
-      send({ type: "launch_call", payload: { domain: domain } });
-      setTimeout(function(){ btnLaunch.disabled = false; }, 3000);
-    });
   });
 
   // ── Verdict drawer ──
@@ -1753,22 +1777,13 @@ html, body {
   btnInject.addEventListener("click", function(){
     var t = getInput(); if (t) { flashBtn(btnInject); send({ type: "inject_instruction", payload: { instruction: t } }); }
   });
-  btnOverride.addEventListener("click", function(){
-    var t = getInput(); if (t) { flashBtn(btnOverride); send({ type: "interrupt_and_replace", payload: { instruction: t } }); }
-  });
   btnSpeak.addEventListener("click", function(){
     var t = getInput(); if (t) { flashBtn(btnSpeak); send({ type: "operator_speak", payload: { text: t } }); }
   });
-  btnReload.addEventListener("click", function(){
-    flashBtn(btnReload); send({ type: "reload_policy", payload: {} });
-  });
   cmdInput.addEventListener("keydown", function(e){
-    if (e.key === "Enter" && e.ctrlKey) {
+    if (e.key === "Enter" && e.shiftKey) {
       e.preventDefault();
       var t = getInput(); if (t) { flashBtn(btnSpeak); send({ type: "operator_speak", payload: { text: t } }); }
-    } else if (e.key === "Enter" && e.shiftKey) {
-      e.preventDefault();
-      var t = getInput(); if (t) { flashBtn(btnOverride); send({ type: "interrupt_and_replace", payload: { instruction: t } }); }
     } else if (e.key === "Enter" && !e.shiftKey && !e.ctrlKey) {
       e.preventDefault();
       var t = getInput(); if (t) { flashBtn(btnInject); send({ type: "inject_instruction", payload: { instruction: t } }); }
